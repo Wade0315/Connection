@@ -4,7 +4,7 @@ import networkx as nx
 
 def Execute_and_Parse(dir_map):
 
-    process = subprocess.Popen(['./a.out'], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(['./communication/execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
     start = False
     Vertexs_string = []
     vertex = ""
@@ -45,6 +45,7 @@ def Execute_and_Parse(dir_map):
         
         if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
             readingPath = True
+            print("Hello")
             pathIdx = []
 
 
@@ -74,7 +75,8 @@ def Execute_and_Parse(dir_map):
     return Vertexs, Paths
 
 
-
+if __name__ == "__main__":
+    Execute_and_Parse()
 
 
 

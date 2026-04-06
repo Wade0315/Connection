@@ -1,31 +1,35 @@
-from hm10_esp32 import HM10ESP32Bridge
+from .hm10_esp32 import HM10ESP32Bridge
 import time
 import sys
 import threading
+
+
 #from commucation import commucation
 PORT = 'COM6'
 EXPECTED_NAME = 'HM10_3'
 
-data = open('data.txt', 'w')
+data = open('record.txt', 'w')
 #placement_buffer, movement_buffer = commucation()
-movement_buffer = ['TURNRIGHT', 'TURNBACK', 'STOP']
+movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
+curIndex = 0
 
 def background_listener(bridge):
-    
-
+    global curIndex, movement_buffer
     while True:
         msg = bridge.listen()
-        if msg == "Meet Node":
-            bridge.send(f'{movement_buffer[curIndex % len(movement_buffer)]}\n')
+        if msg == "NODELEAVE":
             curIndex += 1
+            bridge.send(f'{movement_buffer[curIndex % len(movement_buffer)]}\n')
+            #print(f'\n{curIndex}, {movement_buffer[curIndex % len(movement_buffer)]}')
             print("You: ", end="", flush=True)
-        elif msg:
+        if msg:
             print(f"\r[HM10]: {msg}")
             print("You: ", end="", flush=True)
             data.write(f'{msg}\n')
         time.sleep(0.1)
 
-def main():
+def hm10_main():
+    global curIndex, movement_buffer
     bridge = HM10ESP32Bridge(port=PORT)
     
     # 1. Configuration Check
@@ -52,18 +56,18 @@ def main():
     print(f"✨ Ready! Connected to {EXPECTED_NAME}")
     threading.Thread(target=background_listener, args=(bridge,), daemon=True).start()
     
-    isSetup = False
-    curIndex = 0
+    #isSetup = False
 
     try:
         while True:
             user_msg = input("You: ")
             if user_msg.lower() in ['exit', 'quit']: break
-            if user_msg == "Setup" and isSetup == False:
+            if user_msg: bridge.send(f'{user_msg}\n')
+            if user_msg == "ready":
+                curIndex = 0
                 bridge.send(f'{movement_buffer[0]}\n{movement_buffer[1]}\n{movement_buffer[2]}\n')
                 curIndex += 2
                 isSetup = True
-            if user_msg: bridge.send(user_msg)
     except (KeyboardInterrupt, EOFError):
         pass
     
@@ -71,5 +75,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    hm10_main()
 data.close()
