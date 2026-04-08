@@ -1,10 +1,14 @@
-import subprocess
 import re
+import os
 import networkx as nx
+import subprocess
 
-def Execute_and_Parse(dir_map):
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
 
-    process = subprocess.Popen(['./communication/execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
+dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
+
+def Execute_and_Parse(process):
     start = False
     Vertexs_string = []
     vertex = ""
@@ -17,6 +21,17 @@ def Execute_and_Parse(dir_map):
         if line_str == 'Graph end':
             start = False
             print("python end")
+            Vertexs = []
+            for element in Vertexs_string:
+                OriIdx = int(re.search(r'OriIdx:\s*(\d+)', element).group(1))
+                dir = int(re.search(r'dir:\s*(\d+)', element).group(1))
+                RealIdx = int(re.search(r'RealIdx:\s*(\d+)', element).group(1))
+                score = int(re.search(r'score:\s*(\d+)', element).group(1))
+                edges = []
+                for w, t in re.findall(r'weight\s*:\s*(\d+),\s*terminal\s*:\s*(\d+)', element):
+                    edges.append([int(w), int(t)])
+                Vertexs.append([OriIdx, dir, RealIdx, score] + edges)
+            return ("GRAPH", Vertexs)
         if start:
             if line_str == "Vertex {":
                 vertex = ""
@@ -28,6 +43,8 @@ def Execute_and_Parse(dir_map):
         if line_str == 'Graph start':
             start = True
             print("python start")
+        
+        return None
 
     def ReadPath():
         nonlocal line_str, readingPath, Paths, pathIdx
@@ -35,6 +52,7 @@ def Execute_and_Parse(dir_map):
             if line_str == "Submission complete.":
                 readingPath = False
                 Paths.append(pathIdx)
+                return ("PATH", pathIdx)
             
             raw_path_idx = re.search(r'\s*Step\s*\d+\s*:\s*\[Node\s*:\s*(\d+)\s*,\s*Facing\s*:\s*([a-zA-Z]+)\s*\]\s*->\s*Command:\s*([a-zA-Z-]+)\s*', line_str) 
             if raw_path_idx is not None:
@@ -56,27 +74,24 @@ def Execute_and_Parse(dir_map):
         if not start and line_str != 'Graph start':
             print(line, end = "")    
 
-        ReadVertexs()
-        ReadPath()
+        res_v = ReadVertexs()
+        if res_v: yield res_v
+        res_p = ReadPath()
+        if res_p: yield res_p
+
 
     #print(Paths)
-    Vertexs = []
-    for element in Vertexs_string:
-        OriIdx = int(re.search(r'OriIdx:\s*(\d+)', element).group(1))
-        dir = int(re.search(r'dir:\s*(\d+)', element).group(1))
-        RealIdx = int(re.search(r'RealIdx:\s*(\d+)', element).group(1))
-        score = int(re.search(r'score:\s*(\d+)', element).group(1))
-        edges = []
-        for w, t in re.findall(r'weight\s*:\s*(\d+),\s*terminal\s*:\s*(\d+)', element):
-            edges.append([int(w), int(t)])
-        Vertexs.append([OriIdx, dir, RealIdx, score] + edges)
 
 
-    return Vertexs, Paths
 
 
 if __name__ == "__main__":
-    Execute_and_Parse()
+    process = subprocess.Popen([EXEC_PATH], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    for data_type, data in Execute_and_Parse(process):
+        if data_type == "GRAPH":
+            print('read graph!')
+        elif data_type == "PATH":
+            print(f'path: {data}')
 
 
 

@@ -1,22 +1,37 @@
-from .stdoutParser import Execute_and_Parse
-# f = open('filemap.txt', 'r')
-# numberOfVertex, numberOfEdges = map(int, f.readline().split())
-# print(numberOfVertex, numberOfEdges, sep = ", ")
-# for line in f.readlines():
-#     print(line, end = '')
-# f.close()
+import subprocess
+import os
+from stdoutParser import Execute_and_Parse          #test in this file
+#from .stdoutParser import Execute_and_Parse        #test in outer main.py
 
-dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
+
+
+mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
+
 def commute():
+    process = subprocess.Popen([EXEC_PATH], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    Graph = []
+    Node = []
+    Movement = []
+    received = Execute_and_Parse(process)
+    for data_type, data in received:
+        if data_type == "GRAPH":
+            Graph = data
+            yield ("GRAPH", Graph)
+        elif data_type == "PATH":
+            Node.extend([i[0] for i in data])
+            Movement.extend([mapping_move.get(i[1]) for i in data])
+            yield ("NODE", Node)
+            yield ("MOVE", Movement)
 
-    Vertexs, Paths = Execute_and_Parse(dir_map)
 
-    Placement = [j[0] for i in Paths for j in i]
-    Movement = [j[1] for i in Paths for j in i]
-
-    #print(Movement)
-
-    return Placement, Movement
 
 if __name__ == "__main__":
-    commute()
+    for data_type, data in commute():
+        if data_type == "GRAPH":
+            print(f'read graph!')
+        elif data_type == "MOVE":
+            print(f'MOVEMENT: {data}')
+        elif data_type == "NODE":
+            print(f'NODE: {data}')
