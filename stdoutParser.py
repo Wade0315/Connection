@@ -66,8 +66,9 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
             print("Hello")
             pathIdx = []
 
+    
 
-    #read stdout 
+    #read stdout deal with stdin
     for line_str in iter(process.stdout.readline, ''):
         line = line_str #include \n
         line_str = line_str.rstrip("\n")

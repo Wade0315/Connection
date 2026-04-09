@@ -7,14 +7,13 @@ import time
 import numpy as np
 import pandas
 # from BTinterface import BTInterface
-from maze import Action, Maze
 
 
 from score import ScoreboardServer, ScoreboardFake
 import threading
 import queue
-import communication
-from chat_hm10.chat_hm10_esp32 import hm10_main
+from genMovement import commute
+from chat_hm10_esp32 import hm10_main
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -61,7 +60,7 @@ def main(mode: int, bt_port: str, team_name: str, server_url: str, maze_file: st
         threading.Thread(target=score_processor, args=(uid_queue, scoreboard), daemon=True).start()
         hm10_main(uid_queue)
 
-        for data_type, data in communication.commute():
+        for data_type, data in commute():
             if data_type == "GRAPH":
                 print(f'read graph!')
             elif data_type == "MOVE":
@@ -76,7 +75,7 @@ def main(mode: int, bt_port: str, team_name: str, server_url: str, maze_file: st
     elif mode == "1":
         log.info("Mode 1: Self-testing mode.")
         # TODO: You can write your code to test specific function.
-        for data_type, data in communication.commute():
+        for data_type, data in commute():
             if data_type == "GRAPH":
                 print(f'read graph!')
             elif data_type == "MOVE":

@@ -1,7 +1,6 @@
 import subprocess
 import os
-#from stdoutParser import Execute_and_Parse          #test in this file
-from .stdoutParser import Execute_and_Parse        #test in outer main.py
+from stdoutParser import Execute_and_Parse          #test in this file
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
