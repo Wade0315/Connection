@@ -8,7 +8,7 @@ EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
 
 dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 
-def Execute_and_Parse(process):
+def Execute_and_Parse(process: subprocess.Popen[str]):
     start = False
     Vertexs_string = []
     vertex = ""
@@ -71,7 +71,25 @@ def Execute_and_Parse(process):
     for line_str in iter(process.stdout.readline, ''):
         line = line_str #include \n
         line_str = line_str.rstrip("\n")
-        if not start and line_str != 'Graph start':
+        if "Do you want to load a file?[Y/N]:" in line_str:
+            res_check = input("Do you want to load a file?[Y/N]: ") or "Y"
+            process.stdin.write(f"{res_check}\n")
+            process.stdin.flush()
+        elif "Please input the file name:" in line_str:
+            res_file = input("Please input the file name: ") or "maze.csv"
+            process.stdin.write(f"{res_file}\n")
+            process.stdin.flush()
+        elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
+            res_init = input("Please enter \"startPoint\" , \"total cost limit\": ") or "1 1000"
+            res_init = [int(n) for n in res_init.split()]
+            process.stdin.write(f"{res_init[0]} {res_init[1]}\n")
+            process.stdin.flush()
+        elif "Do you want to restart [Y/N]:" in line_str:
+            res_restart = input("Do you want to restart [Y/N]: ") or "N"
+            process.stdin.write(f"{res_restart}\n")
+            process.stdin.flush()
+
+        elif not start and line_str != 'Graph start':
             print(line, end = "")    
 
         res_v = ReadVertexs()

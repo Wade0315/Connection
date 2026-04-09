@@ -1,7 +1,7 @@
 import subprocess
 import os
-from stdoutParser import Execute_and_Parse          #test in this file
-#from .stdoutParser import Execute_and_Parse        #test in outer main.py
+#from stdoutParser import Execute_and_Parse          #test in this file
+from .stdoutParser import Execute_and_Parse        #test in outer main.py
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
@@ -10,7 +10,7 @@ EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
 mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
 
 def commute():
-    process = subprocess.Popen([EXEC_PATH], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen([EXEC_PATH], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
     Graph = []
     Node = []
     Movement = []

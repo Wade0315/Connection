@@ -131,6 +131,7 @@ class ScoreboardServer(Scoreboard):
 
     def get_current_score(self) -> Optional[int]:
         try:
+            #connect to http server
             log.debug(f"{self.ip}/current_score?sid={self.sid}")
             res = requests.get(self.ip + "/current_score", params={"sid": self.sid})
             return res.json()["current_score"]
@@ -157,8 +158,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     try:
-        #scoreboard = ScoreboardServer("TeamName2", "http://140.112.175.18")
-        scoreboard = ScoreboardFake("TeamName", "data/fakeUID.csv")
+        scoreboard = ScoreboardServer("TeamName2", "http://140.112.175.18")
+        #scoreboard = ScoreboardFake("TeamName", "data/fakeUID.csv")
         time.sleep(1)
 
         score, time_remaining = scoreboard.add_UID("10BA617E")

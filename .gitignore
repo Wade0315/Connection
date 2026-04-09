@@ -1,8 +1,7 @@
 #env
 __pycache__/
 .venv/
+.mypy_cache/
 
 #test txt
-record.txt
-requirements.txt
-
+*.txt

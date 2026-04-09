@@ -8,10 +8,14 @@ import numpy as np
 import pandas
 # from BTinterface import BTInterface
 from maze import Action, Maze
-from score import ScoreboardServer, ScoreboardFake
 
+
+from score import ScoreboardServer, ScoreboardFake
+import threading
+import queue
 import communication
 from chat_hm10.chat_hm10_esp32 import hm10_main
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -37,6 +41,7 @@ def parse_args():
     return parser.parse_args()
 
 
+
 def main(mode: int, bt_port: str, team_name: str, server_url: str, maze_file: str):
     #maze = Maze(maze_file)
     #point = ScoreboardServer(team_name, server_url)
@@ -50,19 +55,50 @@ def main(mode: int, bt_port: str, team_name: str, server_url: str, maze_file: st
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
         # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
-        #hm10_main()
-        placement, movement = communication.commute()
-        #print(movement)
+        uid_queue = queue.Queue()
+        scoreboard = ScoreboardServer("Monday_aferernoon_Team3", "http://140.112.175.18")
+        time.sleep(1)
+        threading.Thread(target=score_processor, args=(uid_queue, scoreboard), daemon=True).start()
+        hm10_main(uid_queue)
+
+        for data_type, data in communication.commute():
+            if data_type == "GRAPH":
+                print(f'read graph!')
+            elif data_type == "MOVE":
+                print(f'MOVEMENT: {data}')
+            elif data_type == "NODE":
+                print(f'NODE: {data}')
+        
+
         
 
         
     elif mode == "1":
         log.info("Mode 1: Self-testing mode.")
         # TODO: You can write your code to test specific function.
+        for data_type, data in communication.commute():
+            if data_type == "GRAPH":
+                print(f'read graph!')
+            elif data_type == "MOVE":
+                print(f'MOVEMENT: {data}')
+            elif data_type == "NODE":
+                print(f'NODE: {data}')
 
     else:
         log.error("Invalid mode")
         sys.exit(1)
+
+def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer):
+    print("waiting for UID...")
+    while True:
+        uid = uid_queue.get() 
+        log.debug(f"Get uid: {uid}")
+        
+        score, time_remaining = scoreboard.add_UID(uid)
+        current_score = scoreboard.get_current_score()
+        
+        log.info(f"Current score: {current_score}")
+        print("You: ", end="", flush=True)
 
 
 if __name__ == "__main__":

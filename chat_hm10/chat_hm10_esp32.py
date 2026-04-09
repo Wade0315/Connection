@@ -2,6 +2,8 @@ from .hm10_esp32 import HM10ESP32Bridge
 import time
 import sys
 import threading
+import re
+import queue
 
 
 #from commucation import commucation
@@ -13,7 +15,7 @@ data = open('record.txt', 'w')
 movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
 curIndex = 0
 
-def background_listener(bridge):
+def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue):
     global curIndex, movement_buffer
     while True:
         msg = bridge.listen()
@@ -22,13 +24,17 @@ def background_listener(bridge):
             bridge.send(f'{movement_buffer[curIndex % len(movement_buffer)]}\n')
             #print(f'\n{curIndex}, {movement_buffer[curIndex % len(movement_buffer)]}')
             print("You: ", end="", flush=True)
+        match = re.match(r"^\s*UID\s*:\s*([0-9A-Fa-f]{8})$", msg)
+        if match:
+            uid_value = match.group(1)
+            uid_queue.put(uid_value)
         if msg:
             print(f"\r[HM10]: {msg}")
             print("You: ", end="", flush=True)
             data.write(f'{msg}\n')
-        time.sleep(0.1)
+        time.sleep(0.02)
 
-def hm10_main():
+def hm10_main(uid_queue:queue.Queue):
     global curIndex, movement_buffer
     bridge = HM10ESP32Bridge(port=PORT)
     
@@ -54,7 +60,7 @@ def hm10_main():
         sys.exit(0)
 
     print(f"✨ Ready! Connected to {EXPECTED_NAME}")
-    threading.Thread(target=background_listener, args=(bridge,), daemon=True).start()
+    threading.Thread(target=background_listener, args=(bridge,uid_queue), daemon=True).start()
     
     #isSetup = False
 
@@ -75,5 +81,9 @@ def hm10_main():
 
 
 if __name__ == "__main__":
-    hm10_main()
+    uid_queue = queue.Queue()
+    uid_queue.put("10BA617E")
+    uid_queue.put("84EAB017")
+    uid_queue.put("50335F7E")
+    hm10_main(uid_queue)
 data.close()
