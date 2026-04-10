@@ -2,11 +2,12 @@ import re
 import os
 import networkx as nx
 import subprocess
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
+import logging
 
 dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
+
+log = logging.getLogger(__name__)
+
 
 def Execute_and_Parse(process: subprocess.Popen[str]):
     start = False
@@ -20,7 +21,7 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
         nonlocal start, line_str, Vertexs_string, vertex
         if line_str == 'Graph end':
             start = False
-            print("python end")
+            log.debug("python end")
             Vertexs = []
             for element in Vertexs_string:
                 OriIdx = int(re.search(r'OriIdx:\s*(\d+)', element).group(1))
@@ -42,7 +43,7 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
         
         if line_str == 'Graph start':
             start = True
-            print("python start")
+            log.debug("python start")
         
         return None
 
@@ -63,7 +64,6 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
         
         if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
             readingPath = True
-            print("Hello")
             pathIdx = []
 
     
@@ -91,7 +91,7 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
             process.stdin.flush()
 
         elif not start and line_str != 'Graph start':
-            print(line, end = "")    
+            log.debug(line_str)    
 
         res_v = ReadVertexs()
         if res_v: yield res_v
@@ -105,12 +105,12 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
 
 
 if __name__ == "__main__":
-    process = subprocess.Popen([EXEC_PATH], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(['execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
     for data_type, data in Execute_and_Parse(process):
         if data_type == "GRAPH":
-            print('read graph!')
+            log.debug('read graph!')
         elif data_type == "PATH":
-            print(f'path: {data}')
+            log.debug(f'path: {data}')
 
 
 

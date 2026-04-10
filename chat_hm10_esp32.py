@@ -4,40 +4,35 @@ import sys
 import threading
 import re
 import queue
+import logging
 
+from processor import action_processor
+
+log = logging.getLogger(__name__)
 
 #from commucation import commucation
 PORT = 'COM6'
 EXPECTED_NAME = 'HM10_3'
 
-data = open('record.txt', 'w')
-#placement_buffer, movement_buffer = commucation()
-movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
-curIndex = 0
 
-def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue):
-    global curIndex, movement_buffer
+def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_queue: queue.Queue):
     while True:
         msg = bridge.listen()
         if msg == "NODELEAVE":
-            curIndex += 1
-            bridge.send(f'{movement_buffer[curIndex % len(movement_buffer)]}\n')
-            #print(f'\n{curIndex}, {movement_buffer[curIndex % len(movement_buffer)]}')
-            print("You: ", end="", flush=True)
-        match = re.match(r"^\s*UID\s*:\s*([0-9A-Fa-f]{8})$", msg)
+            event_queue.put(f'{msg}\n')
+        match = re.match(r"^\s*UID\s*:\s*([0-9A-Fa-f]{8})$", msg)   # eat "UID: {UID}"
         if match:
             uid_value = match.group(1)
             uid_queue.put(uid_value)
         if msg:
             print(f"\r[HM10]: {msg}")
             print("You: ", end="", flush=True)
-            data.write(f'{msg}\n')
         time.sleep(0.02)
 
 def hm10_main(uid_queue:queue.Queue):
-    global curIndex, movement_buffer
     bridge = HM10ESP32Bridge(port=PORT)
-    
+    event_queue = queue.Queue() #remember node or treasure point
+
     # 1. Configuration Check
     current_name = bridge.get_hm10_name()
     if current_name != EXPECTED_NAME:
@@ -60,8 +55,8 @@ def hm10_main(uid_queue:queue.Queue):
         sys.exit(0)
 
     print(f"✨ Ready! Connected to {EXPECTED_NAME}")
-    threading.Thread(target=background_listener, args=(bridge,uid_queue), daemon=True).start()
-    
+    threading.Thread(target=background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
+    threading.Thread(target=action_processor, args=(bridge, event_queue), daemon=True).start()
     #isSetup = False
 
     try:
@@ -70,14 +65,15 @@ def hm10_main(uid_queue:queue.Queue):
             if user_msg.lower() in ['exit', 'quit']: break
             if user_msg: bridge.send(f'{user_msg}\n')
             if user_msg == "ready":
-                curIndex = 0
-                bridge.send(f'{movement_buffer[0]}\n{movement_buffer[1]}\n{movement_buffer[2]}\n')
-                curIndex += 2
-                isSetup = True
+                event_queue.put(f"{user_msg}")
+                print("You: ", end="", flush=True)
+            
     except (KeyboardInterrupt, EOFError):
         pass
     
     print("\nChat closed.")
+
+
 
 
 if __name__ == "__main__":
@@ -86,4 +82,3 @@ if __name__ == "__main__":
     uid_queue.put("84EAB017")
     uid_queue.put("50335F7E")
     hm10_main(uid_queue)
-data.close()
