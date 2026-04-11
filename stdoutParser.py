@@ -9,7 +9,8 @@ dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 log = logging.getLogger(__name__)
 
 
-def Execute_and_Parse(process: subprocess.Popen[str]):
+def Parse(maze_file: str, startPoint: int, total_limit_cost: int):
+    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
     start = False
     Vertexs_string = []
     vertex = ""
@@ -73,17 +74,13 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
         line = line_str #include \n
         line_str = line_str.rstrip("\n")
         if "Do you want to load a file?[Y/N]:" in line_str:
-            res_check = input("Do you want to load a file?[Y/N]: ") or "Y"
-            process.stdin.write(f"{res_check}\n")
+            process.stdin.write("Y\n")
             process.stdin.flush()
         elif "Please input the file name:" in line_str:
-            res_file = input("Please input the file name: ") or "maze.csv"
-            process.stdin.write(f"{res_file}\n")
+            process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            res_init = input("Please enter \"startPoint\" , \"total cost limit\": ") or "1 1000"
-            res_init = [int(n) for n in res_init.split()]
-            process.stdin.write(f"{res_init[0]} {res_init[1]}\n")
+            process.stdin.write(f"{startPoint} {total_limit_cost}\n")
             process.stdin.flush()
         elif "Do you want to restart [Y/N]:" in line_str:
             res_restart = input("Do you want to restart [Y/N]: ") or "N"
@@ -106,7 +103,7 @@ def Execute_and_Parse(process: subprocess.Popen[str]):
 
 if __name__ == "__main__":
     process = subprocess.Popen(['execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
-    for data_type, data in Execute_and_Parse(process):
+    for data_type, data in Parse(process):
         if data_type == "GRAPH":
             log.debug('read graph!')
         elif data_type == "PATH":
