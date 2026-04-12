@@ -29,9 +29,8 @@ def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_q
             print("You: ", end="", flush=True)
         time.sleep(0.02)
 
-def hm10_main(uid_queue:queue.Queue):
+def hm10_main(uid_queue:queue.Queue, event_queue: queue.Queue, decision_queue: queue.Queue):
     bridge = HM10ESP32Bridge(port=PORT)
-    event_queue = queue.Queue() #remember node or treasure point
 
     # 1. Configuration Check
     current_name = bridge.get_hm10_name()
@@ -56,7 +55,7 @@ def hm10_main(uid_queue:queue.Queue):
 
     print(f"✨ Ready! Connected to {EXPECTED_NAME}")
     threading.Thread(target=background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
-    threading.Thread(target=action_processor, args=(bridge, event_queue), daemon=True).start()
+    threading.Thread(target=action_processor, args=(bridge, event_queue, decision_queue), daemon=True).start()
     #isSetup = False
 
     try:

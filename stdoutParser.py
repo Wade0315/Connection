@@ -3,14 +3,17 @@ import os
 import networkx as nx
 import subprocess
 import logging
+import threading
+import queue
 
 dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 
 log = logging.getLogger(__name__)
 
 
-def Parse(maze_file: str, startPoint: int, total_limit_cost: int):
+def Parse(maze_file: str, startPoint: int, total_limit_cost: int, decision_queue: queue.Queue):
     process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+
     start = False
     Vertexs_string = []
     vertex = ""
@@ -83,8 +86,10 @@ def Parse(maze_file: str, startPoint: int, total_limit_cost: int):
             process.stdin.write(f"{startPoint} {total_limit_cost}\n")
             process.stdin.flush()
         elif "Do you want to restart [Y/N]:" in line_str:
-            res_restart = input("Do you want to restart [Y/N]: ") or "N"
-            process.stdin.write(f"{res_restart}\n")
+            if decision_queue is not None:
+                res_d = decision_queue.get()
+                log.debug(res_d)
+            process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
 
         elif not start and line_str != 'Graph start':
