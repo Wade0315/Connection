@@ -100,6 +100,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
     elif mode == "1":
         log.info("Mode 1: test read map.")
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, startPoint, limit, decision_queue), daemon=True).start()
+        #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         while True:
             try:
                 path_json = path_queue.get(timeout=1) 
@@ -110,13 +111,6 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
             except KeyboardInterrupt:
                 log.info("end test")
                 break
-        # for data_type, data in commute():
-        #     if data_type == "GRAPH":
-        #         log.info(f'read graph!')
-        #     elif data_type == "MOVE":
-        #         log.info(f'MOVEMENT: {data}')
-        #     elif data_type == "NODE":
-        #         log.info(f'NODE: {data}')
 
 
     elif mode == "2": #crosstest

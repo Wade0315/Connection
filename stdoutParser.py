@@ -88,7 +88,7 @@ def Parse(maze_file: str, startPoint: int, total_limit_cost: int, decision_queue
         elif "Do you want to restart [Y/N]:" in line_str:
             if decision_queue is not None:
                 res_d = decision_queue.get()
-                log.debug(res_d)
+                log.info(f'get decision: {res_d}')
             process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
 

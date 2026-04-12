@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 
 
 mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
-movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
-curIndex = 0
+# movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
+# curIndex = 0
 start = False
 #TODO
 
@@ -33,17 +33,17 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
             output_str = ""
             if path_queue.qsize() < 3 and path_queue.qsize >= 0:
                 for i in range(path_queue.qsize()):
-                    output_str += f"{path_queue.get()}/n"
+                    output_str += f"{path_queue.get()[1]}/n"
                 bridge.send(output_str)
             elif path_queue.qsize >= 3:
-                output_str = f"{path_queue.get()}/n{path_queue.get()}/n{path_queue.get()}/n"
+                output_str = f"{path_queue.get()[1]}/n{path_queue.get()[1]}/n{path_queue.get()[1]}/n"
                 bridge.send(output_str)
             else:
                 pass
         elif action == "NODELEAVE" and start:
             #curIndex += 1
             try:
-                item = path_queue.get(block=False)
+                item = path_queue.get(block=False)[1]
                 bridge.send(f'{item}/n')
             except path_queue.empty():
                 pass
@@ -84,8 +84,7 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, startPoint: int,
                     "MOVE": mapping_move.get(i[1])
                 }
                 Path_list.append(json_dict)
-                json_str = json.dumps(json_dict)
-                path_queue.put(json_str)
+                path_queue.put((i[0], mapping_move.get(i[1])))
             json_str_buf = json.dumps(Path_list)
             log.debug(f"Path data: {json_str_buf}")
             #path_queue.put(json_str_buf)
