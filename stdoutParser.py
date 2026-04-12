@@ -11,7 +11,7 @@ dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 log = logging.getLogger(__name__)
 
 
-def Parse(maze_file: str, startPoint: int, total_limit_cost: int, decision_queue: queue.Queue):
+def Parse(maze_file: str, restrain: dict, decision_queue: queue.Queue, Passed_path: list, Treasure: list):
     process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
 
     start = False
@@ -83,7 +83,7 @@ def Parse(maze_file: str, startPoint: int, total_limit_cost: int, decision_queue
             process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            process.stdin.write(f"{startPoint} {total_limit_cost}\n")
+            process.stdin.write(f"{restrain["startPoint"]} {restrain["total_cost_limit"]}\n")
             process.stdin.flush()
         elif "Do you want to restart [Y/N]:" in line_str:
             if decision_queue is not None:
@@ -91,6 +91,13 @@ def Parse(maze_file: str, startPoint: int, total_limit_cost: int, decision_queue
                 log.info(f'get decision: {res_d}')
             process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
+        elif "Reach end [Y/N]:" in line_str:
+            if restrain["startPoint"] in Treasure:
+                process.stdin.write("Y\n")
+            else:
+                process.stdin.write("N\n")
+            process.stdin.flush()
+
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str)    

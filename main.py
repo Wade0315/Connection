@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 # TODO : Fill in the following information
 MAZE_FILE = "data/small_maze.csv"
 STARTPOINT = 1
-LIMIT = 10000
+LIMIT = 1000
 TEAM_NAME = "YOUR_TEAM_NAME"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
 BT_PORT = ""
@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument("mode", help="0: treasure-hunting, 1: self-testing", type=str)
     parser.add_argument("--maze-file", default=MAZE_FILE, help="Maze file", type=str)
     parser.add_argument("--startPoint", default=STARTPOINT, help="startPoint", type=int)
-    parser.add_argument("--limit", default=LIMIT, help="limit", type=int)
+    parser.add_argument("--limit", default=LIMIT, help="limit", type=float)
     parser.add_argument("--bt-port", default=BT_PORT, help="Bluetooth port", type=str)
     parser.add_argument(
         "--team-name", default=TEAM_NAME, help="Your team name", type=str
@@ -55,22 +55,21 @@ def parse_args():
 
 
 
-def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, team_name: str, server_url: str):
-    #point = ScoreboardServer(team_name, server_url)
-    #point = ScoreboardFake("your team name", "data/fakeUID.csv") # for local testing
-    
-    bridge = HM10ESP32Bridge(port=BT_PORT)
+def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str, team_name: str, server_url: str):
+    point = ScoreboardServer(team_name, server_url)
+    point = ScoreboardFake("your team name", "data/fakeUID.csv") # for local testing
+    restrain = {
+        "startPoint": startPoint,
+        "total_cost_limit": limit
+    }
+
+    #bridge = HM10ESP32Bridge(port=BT_PORT)
 
     event_queue = queue.Queue() #store instant information
     path_queue = queue.Queue()  #store path 
     decision_queue = queue.Queue()  #eat the command if the car is gonna restart or continue
     uid_queue = queue.Queue()   #eat uid
     
-
-    ### Bluetooth connection haven't been implemented yet, we will update ASAP ###
-    # interface = BTInterface(port=bt_port)
-    # TODO : Initialize necessary variables
-
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
         # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
@@ -78,9 +77,11 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
         time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard), daemon=True).start()
         BT_setup.hm10_main(bridge)
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, startPoint, limit, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, restrain, decision_queue), daemon=True).start()
         threading.Thread(target=BT_setup.background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        start_time = time.time()
+        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
 
         try:
             while True:
@@ -99,13 +100,19 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
         
     elif mode == "1":
         log.info("Mode 1: test read map.")
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, startPoint, limit, decision_queue), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, restrain, decision_queue), daemon=True).start()
+        #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        start_time = time.time()
+        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
+        ct = 0
         while True:
             try:
                 path_data = path_queue.get(timeout=1) 
                 log.info(f"get path: {path_data}") 
-                decision_queue.put("N")
+                if ct < 3:
+                    decision_queue.put("N")
+                elif ct == 3:
+                    decision_queue.put("Y")
             except queue.Empty:
                 pass
             except KeyboardInterrupt:
@@ -118,7 +125,9 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
         BT_setup.hm10_main(bridge)
         threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
-        
+        start_time = time.time()
+        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
+
         def auto_refill_path(path_queue: queue.Queue):
             test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l')]
             while True:
