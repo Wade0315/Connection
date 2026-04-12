@@ -25,14 +25,14 @@ def setup_logging():
     
     root_logger.addHandler(handler)
 
-    logging.getLogger("stdoutParser").setLevel(logging.DEBUG)
+    logging.getLogger("stdoutParser").setLevel(logging.INFO)
     logging.getLogger("scoreboard").setLevel(logging.DEBUG)
     logging.getLogger("processor").setLevel(logging.DEBUG)
     logging.getLogger("BT_setup").setLevel(logging.DEBUG)
 
 
     
-    logging.getLogger("stdoutParser").propagate = False
+    logging.getLogger("stdoutParser").propagate = True
     logging.getLogger("scoreboard").propagate = True
     logging.getLogger("processor").propagate = True
     logging.getLogger("BT_setup").propagate = True

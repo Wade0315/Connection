@@ -65,24 +65,26 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
             
 
 #connect to server
-def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer):
+def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status: dict):
     log.info('waiting for UID')
     while True:
         uid = uid_queue.get() 
         log.debug(f"Get uid: {uid}")
         
         score, time_remaining = scoreboard.add_UID(uid)
+        if time_remaining:
+            status["time_left"] = time_remaining
         current_score = scoreboard.get_current_score()
         
         log.info(f"Current score: {current_score}")
         time.sleep(0.5)
 
 #store path 
-def gen_path_processor(path_queue: queue.Queue, maze_file: str, restrain: dict, decision_queue: queue.Queue):
+def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, decision_queue: queue.Queue):
     log.info('generating path')
     Graph = []
     Treasure = []
-    received = Parse(maze_file, restrain, decision_queue, Passed_path, Treasure)
+    received = Parse(maze_file, status, decision_queue, Passed_path, Treasure)
     for data_type, data in received:
         if data_type == "GRAPH":
             Graph = data
@@ -106,16 +108,17 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, restrain: dict, 
 
 
 
-def current_status_handler(restrain: dict, startPoint: int, limit: float, current_time: float):
+def current_status_handler(status: dict, startPoint: int, limit: float, current_time: float):
     while True:
         if not Passed_path:
-            restrain["startPoint"] = startPoint
+            status["current_node"] = startPoint
         else:
-            restrain["startPoint"] = Passed_path[-1] or startPoint
+            status["current_node"] = Passed_path[-1]
         cost_time = (time.time() - current_time)
         if cost_time >= 0:
-            restrain["limit"] = limit - (time.time() - current_time)
+            status["time_left"] = limit - (time.time() - current_time)
         else:
-            restrain["limit"] = 0
-        log.debug(f" [STATUS] - startPoint: {restrain['startPoint']}, limit: {restrain['limit']}")
+            status["time_left"] = 0
+            break
+        log.debug(f" [STATUS] - current_node: {status['current_node']}, time_left: {status['time_left']}")
         time.sleep(1)

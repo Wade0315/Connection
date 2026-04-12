@@ -57,13 +57,13 @@ def parse_args():
 
 def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str, team_name: str, server_url: str):
     point = ScoreboardServer(team_name, server_url)
-    point = ScoreboardFake("your team name", "data/fakeUID.csv") # for local testing
-    restrain = {
-        "startPoint": startPoint,
-        "total_cost_limit": limit
+    #point = ScoreboardFake("your team name", "data/testUID.csv") # for local testing
+    status = {
+        "current_node": startPoint,
+        "time_left": limit
     }
 
-    #bridge = HM10ESP32Bridge(port=BT_PORT)
+    bridge = HM10ESP32Bridge(port=BT_PORT)
 
     event_queue = queue.Queue() #store instant information
     path_queue = queue.Queue()  #store path 
@@ -75,13 +75,13 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         time.sleep(1)
-        threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard), daemon=True).start()
+        threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         BT_setup.hm10_main(bridge)
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, restrain, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         threading.Thread(target=BT_setup.background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
-        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
+        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         try:
             while True:
@@ -100,18 +100,20 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         
     elif mode == "1":
         log.info("Mode 1: test read map.")
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, restrain, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
-        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
+        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
         ct = 0
         while True:
             try:
                 path_data = path_queue.get(timeout=1) 
                 log.info(f"get path: {path_data}") 
-                if ct < 3:
+                if ct < 1:
                     decision_queue.put("N")
-                elif ct == 3:
+                    ct += 1
+                elif ct == 1:
+                    status["current_node"] = 1
                     decision_queue.put("Y")
             except queue.Empty:
                 pass
@@ -126,7 +128,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
-        threading.Thread(target=processor.current_status_handler, args=(restrain, startPoint, limit, start_time), daemon=True).start()
+        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
             test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l')]
