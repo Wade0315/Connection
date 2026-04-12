@@ -16,39 +16,44 @@ log = logging.getLogger(__name__)
 mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
 # movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
 # curIndex = 0
-start = False
+ingame = False
 #TODO
 
 #處理即時資訊
 def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue):
+    global ingame
     log.info('waiting for action')
     while True:
         action = event_queue.get() 
         log.debug(f"Get movement: {action}")
         if action == "ready":
-            start = True
+            ingame = True
             # curIndex = 0
             # bridge.send(f'{movement_buffer[curIndex]}\n{movement_buffer[curIndex+1]}\n{movement_buffer[curIndex+1]}\n')  
             # curIndex += 2 
             output_str = ""
-            if path_queue.qsize() < 3 and path_queue.qsize >= 0:
+            if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
                 for i in range(path_queue.qsize()):
-                    output_str += f"{path_queue.get()[1]}/n"
+                    output_str += f"{path_queue.get()[1]}\n"
                 bridge.send(output_str)
-            elif path_queue.qsize >= 3:
-                output_str = f"{path_queue.get()[1]}/n{path_queue.get()[1]}/n{path_queue.get()[1]}/n"
+            elif path_queue.qsize() >= 3:
+                output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
                 bridge.send(output_str)
             else:
                 pass
-        elif action == "NODELEAVE" and start:
+        elif action == "NODELEAVE" and ingame:
             #curIndex += 1
             try:
                 item = path_queue.get(block=False)[1]
-                bridge.send(f'{item}/n')
-            except path_queue.empty():
+                bridge.send(f'{item}\n')
+            except queue.Empty:
                 pass
         elif action == "restart":
             log.warning("need restart!")
+            with path_queue.mutex:
+                path_queue.queue.clear()
+            with event_queue.mutex:
+                event_queue.queue.clear()
             decision_queue.put("Y")
         elif action == "reach":
             log.info("reach treasure point!")
@@ -67,6 +72,7 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer):
         current_score = scoreboard.get_current_score()
         
         log.info(f"Current score: {current_score}")
+        time.sleep(0.5)
 
 #store path 
 def gen_path_processor(path_queue: queue.Queue, maze_file: str, startPoint: int, total_cost_limit: int, decision_queue: queue.Queue):

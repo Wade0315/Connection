@@ -15,7 +15,7 @@ def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_q
     while True:
         msg = bridge.listen()
         if msg == "NODELEAVE":
-            event_queue.put(f'{msg}\n')
+            event_queue.put(msg)
         match = re.match(r"^\s*UID\s*:\s*([0-9A-Fa-f]{8})$", msg)   # eat "UID: {UID}"
         if match:
             uid_value = match.group(1)

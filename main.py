@@ -77,8 +77,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard), daemon=True).start()
-
         BT_setup.hm10_main(bridge)
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, startPoint, limit, decision_queue), daemon=True).start()
         threading.Thread(target=BT_setup.background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
 
@@ -100,12 +100,12 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
     elif mode == "1":
         log.info("Mode 1: test read map.")
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, startPoint, limit, decision_queue), daemon=True).start()
-        #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         while True:
             try:
-                path_json = path_queue.get(timeout=1) 
-                log.info(f"get path: {path_json}") 
-                event_queue.put('reach')               
+                path_data = path_queue.get(timeout=1) 
+                log.info(f"get path: {path_data}") 
+                decision_queue.put("N")
             except queue.Empty:
                 pass
             except KeyboardInterrupt:
@@ -119,16 +119,17 @@ def main(mode: int, maze_file: str, startPoint: int, limit: int, bt_port: str, t
         threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         
-        try:
+        def auto_refill_path(path_queue: queue.Queue):
+            test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l')]
             while True:
                 if path_queue.empty():
-                    path_queue.put('r')
-                    path_queue.put('b')
-                    path_queue.put('f')
-                    path_queue.put('b')
-                    path_queue.put('l')
-                    path_queue.put('r')
-                    user_msg = input("You: ")
+                    for move in test_moves:
+                        path_queue.put(move)
+                time.sleep(0.5)
+        threading.Thread(target=auto_refill_path, args=(path_queue,), daemon=True).start()
+        try:
+            while True:
+                user_msg = input("You: ")
                 if user_msg.lower() in ['exit', 'quit']: break
                 if user_msg: 
                     bridge.send(f'{user_msg}\n')
