@@ -11,7 +11,7 @@ dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 log = logging.getLogger(__name__)
 
 
-def Parse(maze_file: str, status: dict, decision_queue: queue.Queue, Treasure: list):
+def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
     process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
 
     start = False
@@ -20,6 +20,8 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue, Treasure: l
     Paths = []
     readingPath = False
     pathIdx = []
+    readTreasure = False
+    Treasure = []
 
     def ReadVertexs():
         nonlocal start, line_str, Vertexs_string, vertex
@@ -70,6 +72,15 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue, Treasure: l
             readingPath = True
             pathIdx = []
 
+    def ReadTreasure():
+        nonlocal line_str, readTreasure, Treasure
+        if readTreasure:
+            Treasure = [int(x) for x in line_str.split()]
+            readTreasure = False
+            log.info(f"Treasure point: {Treasure}")
+            return ("TREASURE", Treasure)
+        if "Treasure Point Index" in line_str:
+            readTreasure = True
     
 
     #read stdout deal with stdin
@@ -111,6 +122,9 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue, Treasure: l
         if res_v: yield res_v
         res_p = ReadPath()
         if res_p: yield res_p
+        res_t = ReadTreasure()
+        if res_t: yield res_t
+            
 
 
     #print(Paths)

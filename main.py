@@ -102,7 +102,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
     elif mode == "1":
         log.info("Mode 1: test read map.")
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
-        #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
         ct = 0

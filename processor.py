@@ -84,7 +84,7 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, de
     log.info('[Path] - generating path')
     Graph = []
     Treasure = []
-    received = Parse(maze_file, status, decision_queue, Treasure)
+    received = Parse(maze_file, status, decision_queue)
     for data_type, data in received:
         if data_type == "GRAPH":
             Graph = data
