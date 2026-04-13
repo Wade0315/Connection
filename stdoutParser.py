@@ -2,25 +2,32 @@ import re
 import os
 import networkx as nx
 import subprocess
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-EXEC_PATH = os.path.join(CURRENT_DIR, 'execute')
+import logging
+import threading
+import queue
 
 dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 
-def Execute_and_Parse(process):
+log = logging.getLogger(__name__)
+
+
+def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
+    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+
     start = False
     Vertexs_string = []
     vertex = ""
     Paths = []
     readingPath = False
     pathIdx = []
+    readTreasure = False
+    Treasure = []
 
     def ReadVertexs():
         nonlocal start, line_str, Vertexs_string, vertex
         if line_str == 'Graph end':
             start = False
-            print("python end")
+            log.debug("python end")
             Vertexs = []
             for element in Vertexs_string:
                 OriIdx = int(re.search(r'OriIdx:\s*(\d+)', element).group(1))
@@ -42,7 +49,7 @@ def Execute_and_Parse(process):
         
         if line_str == 'Graph start':
             start = True
-            print("python start")
+            log.debug("python start")
         
         return None
 
@@ -63,21 +70,61 @@ def Execute_and_Parse(process):
         
         if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
             readingPath = True
-            print("Hello")
             pathIdx = []
 
+    def ReadTreasure():
+        nonlocal line_str, readTreasure, Treasure
+        if readTreasure:
+            Treasure = [int(x) for x in line_str.split()]
+            readTreasure = False
+            log.info(f"Treasure point: {Treasure}")
+            return ("TREASURE", Treasure)
+        if "Treasure Point Index" in line_str:
+            readTreasure = True
+    
 
-    #read stdout 
+    #read stdout deal with stdin
     for line_str in iter(process.stdout.readline, ''):
         line = line_str #include \n
         line_str = line_str.rstrip("\n")
-        if not start and line_str != 'Graph start':
-            print(line, end = "")    
+        if "Do you want to load a file?[Y/N]:" in line_str:
+            process.stdin.write("Y\n")
+            process.stdin.flush()
+        elif "Please input the file name:" in line_str:
+            process.stdin.write(f"{maze_file}\n")
+            process.stdin.flush()
+        elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
+            process.stdin.write(f"{status["current_node"]} {status["time_left"]}\n")
+            process.stdin.flush()
+            log.info(f"enter startPoint: {status["current_node"]}, time_left: {status["time_left"]}")
+        elif "Do you want to restart [Y/N]:" in line_str:
+            if decision_queue is not None:
+                res_d = decision_queue.get()
+                log.info(f'get decision: {res_d}')
+            process.stdin.write(f"{res_d}\n")
+            process.stdin.flush()
+        elif "Reach end [Y/N]:" in line_str:
+            if status["current_node"] in Treasure:
+                res_t = "Y"
+            else:
+                res_t = "N"
+            process.stdin.write(f"{res_t}\n")
+            process.stdin.flush()
+            log.info(f"Reach end: {res_t}")
+
+        elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
+            log.info("\n\n===============Mission completed=================\n")
+
+        elif not start and line_str != 'Graph start':
+            log.debug(line_str) 
 
         res_v = ReadVertexs()
         if res_v: yield res_v
         res_p = ReadPath()
         if res_p: yield res_p
+        res_t = ReadTreasure()
+        if res_t: yield res_t
+            
 
 
     #print(Paths)
@@ -86,12 +133,12 @@ def Execute_and_Parse(process):
 
 
 if __name__ == "__main__":
-    process = subprocess.Popen([EXEC_PATH], stdout = subprocess.PIPE, text = True, bufsize = 1)
-    for data_type, data in Execute_and_Parse(process):
+    process = subprocess.Popen(['execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
+    for data_type, data in Parse(process):
         if data_type == "GRAPH":
-            print('read graph!')
+            log.debug('read graph!')
         elif data_type == "PATH":
-            print(f'path: {data}')
+            log.debug(f'path: {data}')
 
 
 
