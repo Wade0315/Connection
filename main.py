@@ -57,6 +57,7 @@ def parse_args():
 
 def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str, team_name: str, server_url: str):
     point = ScoreboardServer(team_name, server_url)
+    log.info("\n\n===================Start====================\n")
     #point = ScoreboardFake("your team name", "data/testUID.csv") # for local testing
     status = {
         "current_node": startPoint,
@@ -76,7 +77,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
-        BT_setup.hm10_main(bridge)
+        BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         threading.Thread(target=BT_setup.background_listener, args=(bridge,uid_queue, event_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
@@ -109,12 +110,17 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
             try:
                 path_data = path_queue.get(timeout=1) 
                 log.info(f"get path: {path_data}") 
-                if ct < 1:
+                if ct != 1 and ct <= 100:
                     decision_queue.put("N")
                     ct += 1
                 elif ct == 1:
-                    status["current_node"] = 1
+                    status["current_node"] = 20
                     decision_queue.put("Y")
+                    path_queue.queue.clear()
+                    ct += 1
+                else:
+                    time.sleep(3)
+                    break
             except queue.Empty:
                 pass
             except KeyboardInterrupt:
@@ -123,8 +129,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
 
 
     elif mode == "2": #crosstest
-        log.info("Mode 1: cross test.")
-        BT_setup.hm10_main(bridge)
+        log.info("Mode 2: cross test.")
+        BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
@@ -150,6 +156,28 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
             pass
         print("\nChat closed.")
 
+    elif mode == "3":   #scoreboard test
+        log.info("Mode 3: scoreboard test.")
+        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
+        time.sleep(1)
+        threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
+        uid_queue.put("33333333")
+        uid_queue.put("00000000")
+        uid_queue.put("11111111")
+        uid_queue.put("9AC053BD")
+        uid_queue.put("22222222")
+        uid_queue.put("44444444")
+        uid_queue.put("55555555")
+        uid_queue.put("66666666")
+        uid_queue.put("77777777")
+        uid_queue.put("88888888")
+        try:
+            while True:
+                user_msg = input("You: ")
+                if user_msg.lower() in ['exit', 'quit']: break
+        except (KeyboardInterrupt, EOFError):
+            pass
+        print("\nChat closed.")
 
     else:
         log.error("Invalid mode")

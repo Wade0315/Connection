@@ -6,7 +6,6 @@ import re
 import queue
 import logging
 
-import main
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_q
         msg = bridge.listen()
         if msg == "NODELEAVE":
             event_queue.put(msg)
-        match = re.match(r"^\s*UID\s*:\s*([0-9A-Fa-f]{8})$", msg)   # eat "UID: {UID}"
+        match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
         if match:
             uid_value = match.group(1)
             uid_queue.put(uid_value)
@@ -24,15 +23,15 @@ def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_q
             log.info(f"\r[HM10]: {msg}")
         time.sleep(0.08)
 
-def hm10_main(bridge: HM10ESP32Bridge):
+def hm10_main(bridge: HM10ESP32Bridge, team_name: str):
 
     # 1. Configuration Check
     current_name = bridge.get_hm10_name()
-    if current_name != main.TEAM_NAME:
-        log.info(f"Target mismatch. Current: {current_name}, Expected: {main.TEAM_NAME}")
-        log.info(f"Updating target name to {main.TEAM_NAME}...")
+    if current_name != team_name:
+        log.info(f"Target mismatch. Current: {current_name}, Expected: {team_name}")
+        log.info(f"Updating target name to {team_name}...")
         
-        if bridge.set_hm10_name(main.TEAM_NAME):
+        if bridge.set_hm10_name(team_name):
             log.info("✅ Name updated successfully. Resetting ESP32...")
             bridge.reset()
             # Re-init after reset
@@ -47,7 +46,7 @@ def hm10_main(bridge: HM10ESP32Bridge):
         log.info(f"⚠️ ESP32 is {status}. Please ensure HM-10 is advertising. Exiting.")
         sys.exit(0)
 
-    log.info(f"✨ Ready! Connected to {main.TEAM_NAME}")
+    log.info(f"✨ Ready! Connected to {team_name}")
 
 
 
