@@ -8,18 +8,15 @@ import re
 import queue
 import logging
 import json
-from stdoutParser import Parse
+from Parser import Parse
 
 log = logging.getLogger(__name__)
 
 
 mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
 Passed_path = []
-# movement_buffer = ['r', 'b', 'f', 'b', 'l', 'b']
-# curIndex = 0
 ingame = False
 
-#TODO
 
 #處理即時資訊
 def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue):
@@ -27,12 +24,9 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
     log.info('[Action] - waiting for action')
     while True:
         action = event_queue.get() 
-        log.debug(f"[Action] - Get movement: {action}")
+        log.debug(f"[Action] - Get action: {action}")
         if action == "ready":
             ingame = True
-            # curIndex = 0
-            # bridge.send(f'{movement_buffer[curIndex]}\n{movement_buffer[curIndex+1]}\n{movement_buffer[curIndex+1]}\n')  
-            # curIndex += 2 
             output_str = ""
             if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
                 for i in range(path_queue.qsize()):
@@ -44,7 +38,6 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
             else:
                 pass
         elif action == "NODELEAVE" and ingame:
-            #curIndex += 1
             try:
                 item = path_queue.get(block=False)
                 Passed_path.append(item[0])
@@ -90,7 +83,6 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, de
             Graph = data
             log.debug("[Path] - read graph!")
         elif data_type == "TREASURE":
-            #TODO get treasure
             Treasure = data
         elif data_type == "PATH":
             Path_list = []
