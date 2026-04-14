@@ -104,7 +104,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
         elif "Reach end [Y/N]:" in line_str:
-            if status["current_node"] in Treasure:
+            if (status["current_node"] // 4) in Treasure:
                 res_t = "Y"
             else:
                 res_t = "N"

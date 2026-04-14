@@ -3,18 +3,14 @@ import logging
 import os
 import sys
 import time
-from hm10_esp32 import HM10ESP32Bridge
 
 
-import numpy as np
-import pandas
-# from BTinterface import BTInterface
-from log import setup_logging
-
-from score import ScoreboardServer, ScoreboardFake
 import threading
 import queue
-#from chat_hm10_esp32 import hm10_main
+
+from log import setup_logging
+from hm10_esp32 import HM10ESP32Bridge
+from score import ScoreboardServer, ScoreboardFake
 import BT_setup
 import processor
 '''
@@ -35,9 +31,9 @@ log = logging.getLogger(__name__)
 MAZE_FILE = "data/small_maze.csv"
 STARTPOINT = 1
 LIMIT = 1000
-TEAM_NAME = "YOUR_TEAM_NAME"
+TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
-BT_PORT = ""
+BT_PORT = "/dev/ttyUSB0"
 
 
 def parse_args():
@@ -56,25 +52,26 @@ def parse_args():
 
 
 def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str, team_name: str, server_url: str):
-    point = ScoreboardServer(team_name, server_url)
-    log.info("\n\n===================Start====================\n")
+    #scoreboard = ScoreboardServer(team_name, server_url)
     #point = ScoreboardFake("your team name", "data/testUID.csv") # for local testing
+    log.info("\n\n===================Start====================\n")
+    
+    scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
+    bridge = HM10ESP32Bridge(port=bt_port)
+
     status = {
         "current_node": startPoint,
         "time_left": limit
     }
 
-    bridge = HM10ESP32Bridge(port=BT_PORT)
 
     event_queue = queue.Queue() #store instant information
     path_queue = queue.Queue()  #store path 
     decision_queue = queue.Queue()  #eat the command if the car is gonna restart or continue
     uid_queue = queue.Queue()   #eat uid
-    
+
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
-        # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
-        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         BT_setup.hm10_main(bridge, team_name)
@@ -96,8 +93,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
             pass
         print("\nChat closed.")
 
-        
-
+#======================================================================================================================================================
         
     elif mode == "1":
         log.info("Mode 1: test read map.")
@@ -109,12 +105,12 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         while True:
             try:
                 path_data = path_queue.get(timeout=1) 
-                log.info(f"get path: {path_data}") 
+                #log.info(f"get path: {path_data}") 
                 if ct != 1 and ct <= 100:
                     decision_queue.put("N")
                     ct += 1
                 elif ct == 1:
-                    status["current_node"] = 20
+                    status["current_node"] = 12
                     decision_queue.put("Y")
                     path_queue.queue.clear()
                     ct += 1
@@ -127,6 +123,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 log.info("end test")
                 break
 
+#======================================================================================================================================================
 
     elif mode == "2": #crosstest
         log.info("Mode 2: cross test.")
@@ -156,9 +153,10 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
             pass
         print("\nChat closed.")
 
+#======================================================================================================================================================
+
     elif mode == "3":   #scoreboard test
         log.info("Mode 3: scoreboard test.")
-        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         uid_queue.put("33333333")
