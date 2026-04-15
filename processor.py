@@ -26,18 +26,22 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
         action = event_queue.get() 
         log.debug(f"[Action] - Get action: {action}")
         if action == "ready":
+            bridge.send(f'{action}\n')
             ingame = True
             output_str = ""
             if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
                 for i in range(path_queue.qsize()):
                     output_str += f"{path_queue.get()[1]}\n"
                 bridge.send(output_str)
+                log.info(output_str.replace('\n', ' '))
             elif path_queue.qsize() >= 3:
                 output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
                 bridge.send(output_str)
+                log.info(output_str.replace('\n', ' '))
             else:
+                log.error("path_queue error!")
                 pass
-        elif action == "NODELEAVE" and ingame:
+        elif action == "NN" and ingame:
             try:
                 item = path_queue.get(block=False)
                 Passed_path.append(item[0])

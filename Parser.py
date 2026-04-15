@@ -66,7 +66,8 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
                 idx = int(raw_path_idx.group(1))
                 dir = dir_map.get(raw_path_idx.group(2))
                 movement = raw_path_idx.group(3)
-                pathIdx.append([idx*4+dir, movement])
+                if idx > 1:
+                    pathIdx.append([idx, movement])
         
         if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
             readingPath = True

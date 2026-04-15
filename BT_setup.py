@@ -10,10 +10,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def background_listener(bridge: HM10ESP32Bridge, uid_queue: queue.Queue, event_queue: queue.Queue):
+def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_queue: queue.Queue):
     while True:
         msg = bridge.listen()
-        if msg == "NODELEAVE":
+        if msg == "NN":
             event_queue.put(msg)
         match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
         if match:
