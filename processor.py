@@ -46,6 +46,7 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
                 item = path_queue.get(block=False)
                 Passed_path.append(item[0])
                 bridge.send(f'{item[1]}\n')
+                log.info(f"[Action] - send command: {item[1]}")
             except queue.Empty:
                 pass
         elif action == "restart":

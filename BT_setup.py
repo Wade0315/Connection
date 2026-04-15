@@ -15,10 +15,13 @@ def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_q
         msg = bridge.listen()
         if msg == "NN":
             event_queue.put(msg)
+            log.info(f"put {msg} to event_queue")
         match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
         if match:
             uid_value = match.group(1)
             uid_queue.put(uid_value)
+            log.info(f'get uid: {uid_value}')
+            event_queue.put("reach")
         if msg:
             log.info(f"\r[HM10]: {msg}")
         time.sleep(0.08)

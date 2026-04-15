@@ -58,7 +58,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
     log.info("\n\n===================Start====================\n")
     
     scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
-    #bridge = HM10ESP32Bridge(port=bt_port)
+    bridge = HM10ESP32Bridge(port=bt_port)
 
     status = {
         "current_node": startPoint,
@@ -73,7 +73,6 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
 
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
-        time.sleep(1)
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
@@ -101,7 +100,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
     elif mode == "1":
         log.info("Mode 1: test read map.")
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
-        #threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
         start_time = time.time()
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
@@ -137,7 +136,6 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 if user_msg: 
                     bridge.send(f'{user_msg}\n')
                     log.info(f"user input: {user_msg}")
-                    print("You: ", end="", flush=True)      
         except (KeyboardInterrupt, EOFError):
             pass
         print("\nChat closed.")
