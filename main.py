@@ -88,7 +88,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 user_msg = input("You: ")
                 if user_msg.lower() in ['exit', 'quit']: break
                 if user_msg: 
-                    event_queue.put(user_msg)
+                    if user_msg == "ready" or user_msg == "restart":
+                        event_queue.put(user_msg)
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
             log.info("end test")
@@ -134,7 +135,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 user_msg = input("You: ")
                 if user_msg.lower() in ['exit', 'quit']: break
                 if user_msg: 
-                    bridge.send(f'{user_msg}\n')
+                    if user_msg == "ready" or user_msg == "restart":
+                        event_queue.put(user_msg)
                     log.info(f"user input: {user_msg}")
         except (KeyboardInterrupt, EOFError):
             pass
