@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
-    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(["./execute2"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
 
     start = False
     Vertexs_string = []
@@ -58,8 +58,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
         if readingPath:
             if line_str == "Submission complete.":
                 readingPath = False
-                Paths.append(pathIdx)
-                return ("PATH", pathIdx)
+                Paths.extend(pathIdx)
             
             raw_path_idx = re.search(r'\s*Step\s*\d+\s*:\s*\[Node\s*:\s*(\d+)\s*,\s*Facing\s*:\s*([a-zA-Z]+)\s*\]\s*->\s*Command:\s*([a-zA-Z-]+)\s*', line_str) 
             if raw_path_idx is not None:
@@ -98,6 +97,10 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             process.stdin.write(f"{status["current_node"]} {status["time_left"]}\n")
             process.stdin.flush()
             log.info(f"enter startPoint: {status["current_node"]}, time_left: {status["time_left"]}")
+        elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
+            yield("PATH", Paths)
+            Paths = []
+            log.info("\n===============Gen path completed=================\n")
         elif "Do you want to restart [Y/N]:" in line_str:
             if decision_queue is not None:
                 res_d = decision_queue.get()
@@ -112,9 +115,6 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             process.stdin.write(f"{res_t}\n")
             process.stdin.flush()
             log.info(f"Reach end: {res_t}")
-
-        elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
-            log.info("\n\n===============Gen path completed=================\n")
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 

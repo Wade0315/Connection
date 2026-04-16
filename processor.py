@@ -55,10 +55,10 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
                 path_queue.queue.clear()
             with event_queue.mutex:
                 event_queue.queue.clear()
+            Passed_path.clear()
             decision_queue.put("Y")
         elif action == "reach" and ingame:
             log.info("[Action] - reach treasure point!")
-            decision_queue.put("N")            
             try:
                 item = path_queue.get(block=False)
                 Passed_path.append(item[0])
@@ -77,8 +77,8 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status
         log.debug(f"[Score] - Get uid: {uid}")
         
         score, time_remaining = scoreboard.add_UID(uid)
-        if abs(time_remaining - status["time_left"]) >= 1:
-            status["time_left"] = time_remaining
+        if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
+            status["end_time"] = time_remaining + time.time()
         current_score = scoreboard.get_current_score()
         
         log.info(f"[Score] - Current score: {current_score}")
@@ -113,16 +113,21 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, de
 
 
 def current_status_handler(status: dict, startPoint: int, limit: float, start_time: float):
+    if "end_time" not in status:
+        status["end_time"] = start_time + limit
     while True:
-        if not Passed_path:
+        Image_path = Passed_path[:]
+        if not Image_path:
             status["current_node"] = startPoint
+            status["step"] = 1
         else:
-            status["current_node"] = Passed_path[-1]
-        cost_time = (time.time() - start_time)
+            status["current_node"] = Image_path[-1]
+            status["step"] = len(Image_path) + 1
+        cost_time = status["end_time"] - time.time()
         if cost_time >= 0:
-            status["time_left"] = limit - cost_time
+            status["time_left"] = cost_time
         else:
             status["time_left"] = 0
             break
-        #log.debug(f"[STATUS] - current_node: {status['current_node']}, time_left: {status['time_left']}")
+        log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
         time.sleep(1)

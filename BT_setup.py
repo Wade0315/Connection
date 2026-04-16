@@ -22,6 +22,7 @@ def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_q
         elif "please input ready" in msg:
             print("please input ready")
             print("You: ", end = '', flush=True) 
+            
         match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
         if match:
             uid_value = match.group(1)
