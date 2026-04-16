@@ -13,17 +13,21 @@ log = logging.getLogger(__name__)
 def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_queue: queue.Queue):
     while True:
         msg = bridge.listen()
+        if msg:
+            log.info(f"\r[HM10]: {msg}")
+
         if msg == "NN":
             event_queue.put(msg)
             log.info(f"put {msg} to event_queue")
+        elif "please input ready" in msg:
+            print("please input ready")
+            print("You: ", end = '', flush=True) 
         match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
         if match:
             uid_value = match.group(1)
             uid_queue.put(uid_value)
             log.info(f'get uid: {uid_value}')
             event_queue.put("reach")
-        if msg:
-            log.info(f"\r[HM10]: {msg}")
         time.sleep(0.08)
 
 def hm10_main(bridge: HM10ESP32Bridge, team_name: str):

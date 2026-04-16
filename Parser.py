@@ -105,7 +105,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
         elif "Reach end [Y/N]:" in line_str:
-            if (status["current_node"] // 4) in Treasure:
+            if (status["current_node"] - 1) in Treasure:
                 res_t = "Y"
             else:
                 res_t = "N"
@@ -114,7 +114,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             log.info(f"Reach end: {res_t}")
 
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
-            log.info("\n\n===============Mission completed=================\n")
+            log.info("\n\n===============Gen path completed=================\n")
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
