@@ -19,7 +19,7 @@ ingame = False
 
 
 #處理即時資訊
-def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue):
+def action_processor(bridge: HM10ESP32Bridge, startPoint: int, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue):
     global ingame
     log.info('[Action] - waiting for action')
     while True:
@@ -33,10 +33,12 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
                 for i in range(path_queue.qsize()):
                     output_str += f"{path_queue.get()[1]}\n"
                 bridge.send(output_str)
+                Passed_path.append(startPoint)
                 log.info(output_str.replace('\n', ' '))
             elif path_queue.qsize() >= 3:
                 output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
                 bridge.send(output_str)
+                Passed_path.append(startPoint)
                 log.info(output_str.replace('\n', ' '))
             else:
                 log.error("path_queue error!")
@@ -47,6 +49,7 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
                 Passed_path.append(item[0])
                 bridge.send(f'{item[1]}\n')
                 log.info(f"[Action] - send command: {item[1]}")
+                log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
                 pass
         elif action == "restart" and ingame:
@@ -64,6 +67,7 @@ def action_processor(bridge: HM10ESP32Bridge, event_queue: queue.Queue, path_que
                 Passed_path.append(item[0])
                 bridge.send(f'{item[1]}\n')
                 log.info(f"[Action] - send command: {item[1]}")
+                log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
                 pass
 
@@ -122,7 +126,7 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             status["step"] = 1
         else:
             status["current_node"] = Image_path[-1]
-            status["step"] = len(Image_path) + 1
+            status["step"] = len(Image_path)
         cost_time = status["end_time"] - time.time()
         if cost_time >= 0:
             status["time_left"] = cost_time

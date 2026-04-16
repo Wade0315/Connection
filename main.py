@@ -71,11 +71,9 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, startPoint, event_queue, path_queue, decision_queue), daemon=True).start()
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
-        start_time = time.time()
-        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         for i in range(10):
             decision_queue.put("N")
@@ -86,6 +84,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 if user_msg: 
                     if user_msg == "ready" or user_msg == "restart":
                         event_queue.put(user_msg)
+                        start_time = time.time()
+                        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
             log.info("end test")
@@ -119,9 +119,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, event_queue, path_queue, decision_queue), daemon=True).start()
-        start_time = time.time()
-        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, startPoint, event_queue, path_queue, decision_queue), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
             test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l'), (5, 'b')]
@@ -138,6 +136,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                 if user_msg: 
                     if user_msg == "ready" or user_msg == "restart":
                         event_queue.put(user_msg)
+                        start_time = time.time()
+                        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except (KeyboardInterrupt, EOFError):
             pass
