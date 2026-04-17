@@ -10,9 +10,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_queue: queue.Queue):
+def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_queue: queue.Queue, ignore_event: threading.Event):
     while True:
         msg = bridge.listen()
+
+        if ignore_event.is_set():
+            log.debug(f"remove trash report")
+            continue
         if msg:
             log.info(f"\r[HM10]: {msg}")
 

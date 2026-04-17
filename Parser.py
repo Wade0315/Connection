@@ -100,7 +100,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
             yield("PATH", Paths)
             Paths = []
-            log.info("\n===============Gen path completed=================\n")
+            log.info("\n=============== Gen path completed =================\n")
         elif "Do you want to restart [Y/N]:" in line_str:
             if decision_queue is not None:
                 res_d = decision_queue.get()

@@ -19,7 +19,7 @@ ingame = False
 
 
 #處理即時資訊
-def action_processor(bridge: HM10ESP32Bridge, startPoint: int, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue):
+def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue, ignore_event: threading.Event):
     global ingame
     log.info('[Action] - waiting for action')
     while True:
@@ -33,12 +33,12 @@ def action_processor(bridge: HM10ESP32Bridge, startPoint: int, event_queue: queu
                 for i in range(path_queue.qsize()):
                     output_str += f"{path_queue.get()[1]}\n"
                 bridge.send(output_str)
-                Passed_path.append(startPoint)
+                Passed_path.append(status["current_node"])
                 log.info(output_str.replace('\n', ' '))
             elif path_queue.qsize() >= 3:
                 output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
                 bridge.send(output_str)
-                Passed_path.append(startPoint)
+                Passed_path.append(status["current_node"])
                 log.info(output_str.replace('\n', ' '))
             else:
                 log.error("path_queue error!")
@@ -54,16 +54,20 @@ def action_processor(bridge: HM10ESP32Bridge, startPoint: int, event_queue: queu
                 pass
         elif action == "restart" and ingame:
             log.warning("[Action] - need restart!")
+            ignore_event.set()
             while not event_queue.empty():
-                try:
-                    event_queue.get_nowait()
-                except queue.Empty:
-                    break            
+                try: event_queue.get_nowait()
+                except queue.Empty: break            
             while not path_queue.empty():
-                try:
-                    path_queue.get_nowait()
-                except queue.Empty:
-                    break            
+                try: path_queue.get_nowait()
+                except queue.Empty: break  
+            time.sleep(0.2)
+            #保險
+            while not event_queue.empty():
+                try: event_queue.get_nowait()
+                except queue.Empty: break
+            log.info("[ACtion] - have clear all action, start restart")      
+            ignore_event.clear()    
             decision_queue.put("Y")
         elif action == "reach" and ingame:
             log.info("[Action] - reach treasure point!")

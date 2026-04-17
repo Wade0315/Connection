@@ -65,13 +65,15 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
     decision_queue = queue.Queue()  #eat the command if the car is gonna restart or continue
     uid_queue = queue.Queue()   #eat uid
 
+    ignore_event = threading.Event()
+
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
-        threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, startPoint, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue, ignore_event), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, decision_queue, ignore_event), daemon=True).start()
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
 
@@ -118,8 +120,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
-        threading.Thread(target=BT_setup.background_listener, args=(bridge,event_queue, uid_queue), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, startPoint, event_queue, path_queue, decision_queue), daemon=True).start()
+        threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue, ignore_event), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, decision_queue, ignore_event), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
             test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l'), (5, 'b')]
