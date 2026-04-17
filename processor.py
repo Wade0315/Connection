@@ -54,11 +54,16 @@ def action_processor(bridge: HM10ESP32Bridge, startPoint: int, event_queue: queu
                 pass
         elif action == "restart" and ingame:
             log.warning("[Action] - need restart!")
-            with path_queue.mutex:
-                path_queue.queue.clear()
-            with event_queue.mutex:
-                event_queue.queue.clear()
-            Passed_path.clear()
+            while not event_queue.empty():
+                try:
+                    event_queue.get_nowait()
+                except queue.Empty:
+                    break            
+            while not path_queue.empty():
+                try:
+                    path_queue.get_nowait()
+                except queue.Empty:
+                    break            
             decision_queue.put("Y")
         elif action == "reach" and ingame:
             log.info("[Action] - reach treasure point!")
