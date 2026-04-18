@@ -19,30 +19,33 @@ ingame = False
 
 
 #處理即時資訊
-def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Queue, path_queue: queue.Queue, decision_queue: queue.Queue, ignore_event: threading.Event):
+def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Queue, path_queue: queue.Queue, restart_decision: threading.Event, ignore_event: threading.Event):
     global ingame
     log.info('[Action] - waiting for action')
+    def initial_command():
+        output_str = ""
+        if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
+            for i in range(path_queue.qsize()):
+                output_str += f"{path_queue.get()[1]}\n"
+            bridge.send(output_str)
+            Passed_path.append(status["current_node"])
+            log.info(output_str.replace('\n', ' '))
+        elif path_queue.qsize() >= 3:
+            output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
+            bridge.send(output_str)
+            Passed_path.append(status["current_node"])
+            log.info(output_str.replace('\n', ' '))
+        else:
+            log.error("path_queue error!")
+            pass
+
     while True:
         action = event_queue.get() 
         log.debug(f"[Action] - Get action: {action}")
         if action == "ready":
             bridge.send(f'{action}\n')
             ingame = True
-            output_str = ""
-            if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
-                for i in range(path_queue.qsize()):
-                    output_str += f"{path_queue.get()[1]}\n"
-                bridge.send(output_str)
-                Passed_path.append(status["current_node"])
-                log.info(output_str.replace('\n', ' '))
-            elif path_queue.qsize() >= 3:
-                output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
-                bridge.send(output_str)
-                Passed_path.append(status["current_node"])
-                log.info(output_str.replace('\n', ' '))
-            else:
-                log.error("path_queue error!")
-                pass
+            initial_command()
         elif action == "NN" and ingame:
             try:
                 item = path_queue.get(block=False)
@@ -65,7 +68,8 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
         elif action == "restart" and ingame:
             log.warning("[Action] - need restart!")
             ignore_event.set()
-            Passed_path.pop()
+            if Passed_path:
+                Passed_path.pop()
             while not event_queue.empty():
                 try: event_queue.get_nowait()
                 except queue.Empty: break            
@@ -77,11 +81,15 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
             while not event_queue.empty():
                 try: event_queue.get_nowait()
                 except queue.Empty: break
-            log.info("[ACtion] - have clear all action, start restart")      
-            decision_queue.put("Y")
-        elif action == "go":
-            log.info("restart go!")
+            log.info("[Action] - have clear all action, start restart")      
+            restart_decision.set()
+        elif action == "go":            
+            restart_decision.set()
+            time.sleep(0.08)
+            bridge.send()
+            initial_command()
             ignore_event.clear()    
+            log.info("restart go!")
 
 
 
@@ -103,11 +111,11 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status
         time.sleep(0.5)
 
 #store path 
-def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, decision_queue: queue.Queue):
+def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, restart_decision: threading.Event):
     log.info('[Path] - generating path')
     Graph = []
     Treasure = []
-    received = Parse(maze_file, status, decision_queue)
+    received = Parse(maze_file, status, restart_decision)
     for data_type, data in received:
         if data_type == "GRAPH":
             Graph = data

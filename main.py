@@ -62,9 +62,9 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
 
     event_queue = queue.Queue() #store instant information
     path_queue = queue.Queue()  #store path 
-    decision_queue = queue.Queue()  #eat the command if the car is gonna restart or continue
     uid_queue = queue.Queue()   #eat uid
 
+    restart_decision = threading.Event()  #eat the command if the car is gonna restart or continue
     ignore_event = threading.Event()
 
     if mode == "0":
@@ -73,11 +73,10 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue, ignore_event), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, decision_queue, ignore_event), daemon=True).start()
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, restart_decision, ignore_event), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, restart_decision), daemon=True).start()
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
 
-        decision_queue.put("N")
         try:
             while True:
                 user_msg = input("You: ")
@@ -99,15 +98,17 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         log.info("Mode 1: test read map.")
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
-        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
+        threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, restart_decision), daemon=True).start()
         start_time = time.time()
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         try:
-            decision_queue.put("Y")
             time.sleep(5)
-            uid_queue.put("33333333")
-            time.sleep(3)
+            #uid_queue.put("33333333")
+            restart_decision.set()
+            time.sleep(4)
+            restart_decision.set()
+            time.sleep(5)
         except KeyboardInterrupt:
             log.info("end test")
 
@@ -119,7 +120,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue, ignore_event), daemon=True).start()
-        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, decision_queue, ignore_event), daemon=True).start()
+        threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, restart_decision, ignore_event), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
             test_moves = [(0, 'r'), (1, 'b'), (2, 'f'), (3, 'b'), (4, 'l'), (5, 'b')]

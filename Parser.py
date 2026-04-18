@@ -11,7 +11,7 @@ dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 log = logging.getLogger(__name__)
 
 
-def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
+def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
     process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
 
     start = False
@@ -20,7 +20,6 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
     Paths = []
     readingPath = False
     pathIdx = []
-    restartMode = False
 
     def ReadVertexs():
         nonlocal start, line_str, Vertexs_string, vertex
@@ -90,23 +89,25 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             Paths = []
             log.info("\n=============== Gen path completed =================\n")
         elif "Do you want to restart [Y/N]:" in line_str:
-            res_d = decision_queue.get()
-            if res_d == "Y": restartMode = True
-            elif res_d == "N": restartMode = False
-            else: pass
-            log.info(f'get decision: {res_d}')
-            process.stdin.write(f"{res_d}\n")
+            log.debug("Do you want to restart [Y/N]:")
+            restart_decision.wait(timeout=75)
+            log.info(f'get restart')
+            process.stdin.write(f"Y\n")
             process.stdin.flush()
-        elif "Please enter the total index: (1-based)" in line_str and restartMode:
+            restart_decision.clear()
+        elif "Please enter the total index: (1-based)" in line_str:
             res_i = status["step"]
             process.stdin.write(f"{res_i}\n")
             process.stdin.flush()
             log.info(f"enter step: {res_i}")
-        elif "Please enter the remain cost:" in line_str and restartMode:
+        elif "Please enter the remain cost:" in line_str:
+            restart_decision.wait(timeout=75)
             res_t = status["time_left"]
             process.stdin.write(f"{res_t}\n")
             process.stdin.flush()
-            log.info(f"enter step: {res_t}")
+            restart_decision.clear()
+            log.info(f"enter cost: {res_t}")
+
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
