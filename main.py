@@ -103,16 +103,17 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         try:
+            time.sleep(1)
             while not path_queue.empty():
                 log.info(path_queue.get())
             time.sleep(5)
-            #uid_queue.put("33333333")
+            uid_queue.put("33333333")
             restart_decision.set()
             status['step'] = 7
-            while not path_queue.empty():
-                log.info(path_queue.get())
             time.sleep(4)
             restart_decision.set()
+            while not path_queue.empty():
+                log.info(path_queue.get())
             time.sleep(5)
         except KeyboardInterrupt:
             log.info("end test")
