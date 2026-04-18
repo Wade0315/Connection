@@ -77,14 +77,13 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, decision_queue), daemon=True).start()
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
 
-        for i in range(10):
-            decision_queue.put("N")
+        decision_queue.put("N")
         try:
             while True:
                 user_msg = input("You: ")
                 if user_msg.lower() in ['exit', 'quit']: break
                 if user_msg: 
-                    if user_msg == "ready" or user_msg == "restart":
+                    if user_msg == "ready" or user_msg == "restart" or user_msg == "go":
                         event_queue.put(user_msg)
                         start_time = time.time()
                         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
@@ -105,8 +104,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
 
         try:
-            for i in range(0, 10):
-                decision_queue.put("N")
+            decision_queue.put("Y")
             time.sleep(5)
             uid_queue.put("33333333")
             time.sleep(3)

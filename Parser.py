@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
-    process = subprocess.Popen(["./execute2"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
 
     start = False
     Vertexs_string = []
@@ -20,8 +20,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
     Paths = []
     readingPath = False
     pathIdx = []
-    readTreasure = False
-    Treasure = []
+    restartMode = False
 
     def ReadVertexs():
         nonlocal start, line_str, Vertexs_string, vertex
@@ -70,18 +69,7 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
         
         if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
             readingPath = True
-            pathIdx = []
-
-    def ReadTreasure():
-        nonlocal line_str, readTreasure, Treasure
-        if readTreasure:
-            Treasure = [int(x) for x in line_str.split()]
-            readTreasure = False
-            log.info(f"Treasure point: {Treasure}")
-            return ("TREASURE", Treasure)
-        if "Treasure Point Index" in line_str:
-            readTreasure = True
-    
+            pathIdx = []    
 
     #read stdout deal with stdin
     for line_str in iter(process.stdout.readline, ''):
@@ -102,19 +90,23 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
             Paths = []
             log.info("\n=============== Gen path completed =================\n")
         elif "Do you want to restart [Y/N]:" in line_str:
-            if decision_queue is not None:
-                res_d = decision_queue.get()
-                log.info(f'get decision: {res_d}')
+            res_d = decision_queue.get()
+            if res_d == "Y": restartMode = True
+            elif res_d == "N": restartMode = False
+            else: pass
+            log.info(f'get decision: {res_d}')
             process.stdin.write(f"{res_d}\n")
             process.stdin.flush()
-        elif "Reach end [Y/N]:" in line_str:
-            if (status["current_node"] - 1) in Treasure:
-                res_t = "Y"
-            else:
-                res_t = "N"
+        elif "Please enter the total index: (1-based)" in line_str and restartMode:
+            res_i = status["step"]
+            process.stdin.write(f"{res_i}\n")
+            process.stdin.flush()
+            log.info(f"enter step: {res_i}")
+        elif "Please enter the remain cost:" in line_str and restartMode:
+            res_t = status["time_left"]
             process.stdin.write(f"{res_t}\n")
             process.stdin.flush()
-            log.info(f"Reach end: {res_t}")
+            log.info(f"enter step: {res_t}")
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
@@ -123,8 +115,6 @@ def Parse(maze_file: str, status: dict, decision_queue: queue.Queue):
         if res_v: yield res_v
         res_p = ReadPath()
         if res_p: yield res_p
-        res_t = ReadTreasure()
-        if res_t: yield res_t
             
 
 

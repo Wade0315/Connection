@@ -52,9 +52,20 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
                 log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
                 pass
+        elif action == "reach" and ingame:
+            log.info("[Action] - reach treasure point!")
+            try:
+                item = path_queue.get(block=False)
+                Passed_path.append(item[0])
+                bridge.send(f'{item[1]}\n')
+                log.info(f"[Action] - send command: {item[1]}")
+                log.debug(f"Passed_path: {Passed_path}")
+            except queue.Empty:
+                pass
         elif action == "restart" and ingame:
             log.warning("[Action] - need restart!")
             ignore_event.set()
+            Passed_path.pop()
             while not event_queue.empty():
                 try: event_queue.get_nowait()
                 except queue.Empty: break            
@@ -67,18 +78,12 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
                 try: event_queue.get_nowait()
                 except queue.Empty: break
             log.info("[ACtion] - have clear all action, start restart")      
-            ignore_event.clear()    
             decision_queue.put("Y")
-        elif action == "reach" and ingame:
-            log.info("[Action] - reach treasure point!")
-            try:
-                item = path_queue.get(block=False)
-                Passed_path.append(item[0])
-                bridge.send(f'{item[1]}\n')
-                log.info(f"[Action] - send command: {item[1]}")
-                log.debug(f"Passed_path: {Passed_path}")
-            except queue.Empty:
-                pass
+        elif action == "go":
+            log.info("restart go!")
+            ignore_event.clear()    
+
+
 
             
 

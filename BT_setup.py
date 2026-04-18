@@ -17,9 +17,9 @@ def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_q
         if ignore_event.is_set():
             log.debug(f"remove trash report")
             continue
+
         if msg:
             log.info(f"\r[HM10]: {msg}")
-
         if msg == "NN":
             event_queue.put(msg)
             log.info(f"put {msg} to event_queue")
