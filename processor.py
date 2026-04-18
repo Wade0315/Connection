@@ -44,6 +44,7 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
         log.debug(f"[Action] - Get action: {action}")
         if action == "ready":
             bridge.send(f'{action}\n')
+            log.info(f"send {action}")
             ingame = True
             initial_command()
         elif action == "NN" and ingame:

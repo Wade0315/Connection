@@ -18,7 +18,7 @@ settings:
 9. (in windows powershell administor mode) usbipd attach --wsl --busid {BUSID}
 10. (in linux) lsusb
 11. ls /dev/ttyUSB*
-
+12. sudo chmod 666 /dev/ttyUSB0
 
 
 How to execute:

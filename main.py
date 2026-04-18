@@ -85,7 +85,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                     if user_msg == "ready" or user_msg == "restart" or user_msg == "go":
                         event_queue.put(user_msg)
                         start_time = time.time()
-                        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
+                        #threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
             log.info("end test")
