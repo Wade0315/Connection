@@ -20,6 +20,7 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
     Paths = []
     readingPath = False
     pathIdx = []
+    what_Mission = 0
 
     def ReadVertexs():
         nonlocal start, line_str, Vertexs_string, vertex
@@ -52,22 +53,25 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
         return None
 
     def ReadPath():
-        nonlocal line_str, readingPath, Paths, pathIdx
+        nonlocal line_str, readingPath, Paths, pathIdx, what_Mission
         if readingPath:
             if line_str == "Submission complete.":
                 readingPath = False
                 Paths.extend(pathIdx)
             
-            raw_path_idx = re.search(r'\s*Step\s*\d+\s*:\s*\[Node\s*:\s*(\d+)\s*,\s*Facing\s*:\s*([a-zA-Z]+)\s*\]\s*->\s*Command:\s*([a-zA-Z-]+)\s*', line_str) 
+            raw_path_idx = re.search(r'\s*Step\s*(\d+)\s*:\s*\[Node\s*:\s*(\d+)\s*,\s*Facing\s*:\s*([a-zA-Z]+)\s*\]\s*->\s*Command:\s*([a-zA-Z-]+)\s*', line_str) 
             if raw_path_idx is not None:
-                idx = int(raw_path_idx.group(1))
-                dir = dir_map.get(raw_path_idx.group(2))
-                movement = raw_path_idx.group(3)
-                if idx > 1:
+                step = int(raw_path_idx.group(1))
+                idx = int(raw_path_idx.group(2))
+                dir = dir_map.get(raw_path_idx.group(3))
+                movement = raw_path_idx.group(4)
+                if what_Mission > 1 or step > 1:
                     pathIdx.append([idx, movement])
         
-        if re.search(r'\[Mission #\d+\] Heading to target node:\s+\d+', line_str) and not readingPath:
+        startMission = re.search(r'\[Mission #(\d+)\] Heading to target node:\s+\d+', line_str)
+        if startMission and not readingPath:
             readingPath = True
+            what_Mission = int(startMission.group(1))
             pathIdx = []    
 
     #read stdout deal with stdin
