@@ -4,6 +4,7 @@ from score import ScoreboardServer, ScoreboardFake
 import time
 import sys
 import threading
+import _thread
 import re
 import queue
 import logging
@@ -102,7 +103,6 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status
     while True:
         uid = uid_queue.get() 
         log.debug(f"[Score] - Get uid: {uid}")
-        
         score, time_remaining = scoreboard.add_UID(uid)
         if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
             status["end_time"] = time_remaining + time.time()
@@ -143,6 +143,10 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
     if "end_time" not in status:
         status["end_time"] = start_time + limit
     while True:
+        if status["time_left"] <= 1e-2:
+            log.debug("break")
+            _thread.interrupt_main()
+            break
         Image_path = Passed_path[:]
         if not Image_path:
             status["current_node"] = startPoint
@@ -151,10 +155,6 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             status["current_node"] = Image_path[-1]
             status["step"] = len(Image_path)
         cost_time = status["end_time"] - time.time()
-        if cost_time >= 0:
-            status["time_left"] = cost_time
-        else:
-            status["time_left"] = 0
-            break
+        status["time_left"] = cost_time
         log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
         time.sleep(1)

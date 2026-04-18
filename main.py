@@ -67,6 +67,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
     restart_decision = threading.Event()  #eat the command if the car is gonna restart or continue
     ignore_event = threading.Event()
 
+#======================================================================================================================================================
+
     if mode == "0":
         log.info("Mode 0: For treasure-hunting")
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
@@ -85,7 +87,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                     if user_msg == "ready" or user_msg == "restart" or user_msg == "go":
                         event_queue.put(user_msg)
                         start_time = time.time()
-                        #threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
+                        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
             log.info("end test")
@@ -174,9 +176,27 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
             pass
         print("\nChat closed.")
 
+#======================================================================================================================================================
+
+
+    elif mode == "4":   #scoreboard test
+        log.info("Mode 4: current status test.")
+        start_time = time.time()
+        threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
+        i = 0
+        try:
+            while True:
+                print(i)
+                i += 1
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("end")
+            pass
+
     else:
         log.error("Invalid mode")
         sys.exit(1)
+
 
 
 
