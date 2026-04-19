@@ -9,7 +9,7 @@ from draw import path_animation
 
 
 def main():
-    FILE = "../maze.csv"
+    FILE = "../data/big_maze_114.csv"
     path = getPath(FILE)
     G, pos, treasure = GenMap(FILE)
     drawGraph(G, pos, treasure)

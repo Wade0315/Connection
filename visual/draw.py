@@ -26,7 +26,7 @@ def drawGraph(G, pos, treasure):
     node_labels = {}
     for n in G.nodes():
         if n in treasure_map:
-            node_labels[n] = f"{n}\n({treasure_map[n]*10})"
+            node_labels[n] = f"{n}\n({treasure_map[n]})"
         else:
             node_labels[n] = str(n)
     treasure_node_ids = list(treasure_map.keys())
@@ -50,6 +50,7 @@ def drawGraph(G, pos, treasure):
 def path_animation(G, pos, path, treasure):
 
     fig, ax = drawGraph(G, pos, treasure)
+    treasure_map = {node_id: score for node_id, score in treasure}
 
     path_dot = ax.scatter([], [], color='violet', s=800*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
     path_line, = ax.plot([], [], color='violet', linewidth=4, zorder=3, alpha = 0.8)
@@ -84,8 +85,9 @@ def path_animation(G, pos, path, treasure):
     
     all_plots = []  #node
     all_path_points = np.array(path_points) #line
+    score = 0
     def update(frame):
-        nonlocal last_u_vec
+        nonlocal last_u_vec, score
         #update node
         eff_frame = min(frame, len(all_path_points)-1)
         plot_idx = eff_frame // 20
@@ -95,7 +97,7 @@ def path_animation(G, pos, path, treasure):
         path_dot.set_offsets(np.array(all_plots))
 
         #update line
-        tail_length = 10 
+        tail_length = 7 
         start_idx = max(0, eff_frame - tail_length)
         current_line_coords = all_path_points[start_idx : eff_frame+1]
         full_line_coords = all_path_points[0 : eff_frame+1]
@@ -119,7 +121,9 @@ def path_animation(G, pos, path, treasure):
         changed_artists = [path_dot, path_line, passed_line, nav_arrow]
 
         if eff_frame % 20 == 0:    
-            title_text.set_text(f"Path Animation: Step {plot_idx} (Node: {current_node})")
+            if current_node in treasure_map:
+                score += treasure_map[current_node]
+            title_text.set_text(f"Path Animation: Step {plot_idx} (Node: {current_node})\nScore: {score}")
             changed_artists.append(title_text) 
 
         return changed_artists

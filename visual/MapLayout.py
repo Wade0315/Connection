@@ -30,7 +30,7 @@ def GenMap(file) :
                 direction = G[u][v]['direction']
                 center_x_y[v-1] = center_x_y[u-1] + dir_map[direction]
                 if v in TreasureIdx:
-                    treasure.append((v, int(abs(center_x_y[v-1][0])+abs(center_x_y[v-1][1]))))
+                    treasure.append((v, 10 * int(abs(center_x_y[v-1][0])+abs(center_x_y[v-1][1]))))
                 #print(f"{v}: {center_x_y[v-1]} by {u}")
                 visited.add(v)
                 queue.append(v) 
