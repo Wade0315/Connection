@@ -123,7 +123,7 @@ def path_animation(G, pos, path, treasure):
         changed_artists = [path_dot, path_line, passed_line, nav_arrow]
 
         if eff_frame % PER_POINT == 0:    
-            if current_node in treasure_map:
+            if current_node in treasure_map and frame <= eff_frame:
                 score += treasure_map[current_node]
             title_text.set_text(f"Path Animation: Step {plot_idx} (Node: {current_node})\nScore: {score}")
             changed_artists.append(title_text) 
