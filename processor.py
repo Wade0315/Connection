@@ -4,7 +4,7 @@ from score import ScoreboardServer, ScoreboardFake
 import time
 import sys
 import threading
-import _thread
+import os
 import re
 import queue
 import logging
@@ -66,6 +66,9 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
                 log.info(f"[Action] - send command: {item[1]}")
                 log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
+                Passed_path.append(send_buffer[send_idx])
+                if send_idx < len(send_buffer) - 1: send_idx += 1
+                log.debug(f"Passed_path: {Passed_path}")
                 pass
         elif action == "reach" and ingame:
             log.info("[Action] - reach treasure point!")
@@ -78,6 +81,9 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
                 log.info(f"[Action] - send command: {item[1]}")
                 log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
+                Passed_path.append(send_buffer[send_idx])
+                if send_idx < len(send_buffer) - 1: send_idx += 1
+                log.debug(f"Passed_path: {Passed_path}")
                 pass
         elif action == "restart" and ingame:
             log.warning("[Action] - need restart!")
@@ -160,7 +166,7 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
     while True:
         if status["time_left"] <= 1e-2:
             log.debug("break")
-            _thread.interrupt_main()
+            os._exit(0)
             break
         Image_path = Passed_path[:]
         if not Image_path:
