@@ -5,8 +5,8 @@ import collections
 
 FILE = "../data/medium_maze.csv"
 SPACE = 3
-def GenMap() :
-    df = pd.read_csv(FILE, index_col='index')
+def GenMap(file) :
+    df = pd.read_csv(file, index_col='index')
     G = nx.DiGraph()
     dir_map = {'North': np.array([0, 1]), 'East': np.array([1, 0]), 'South': np.array([0, -1]), 'West': np.array([-1, 0])}
     center_x_y = [np.array([0, 0]) for _ in range(len(df))]

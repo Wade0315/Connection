@@ -7,8 +7,7 @@ from MapLayout import GenMap
 from getPath import getPath
 
 ratio = 1
-def drawGraph():
-    G, pos = GenMap()
+def drawGraph(G, pos):
     x_coords = [p[0] for p in pos.values()]
     y_coords = [p[1] for p in pos.values()]
     
@@ -23,7 +22,7 @@ def drawGraph():
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))   
     ax.set_aspect('equal')
     nodes = nx.draw_networkx_nodes(G, pos, node_size=630*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
-    edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='navy', connectionstyle='arc3,rad=0', node_size=630*ratio)
+    edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='lightblue', node_size=630*ratio, alpha = 0.6)
     labels = nx.draw_networkx_labels(G, pos, labels = node_labels, font_size=9)
     nodes.set_zorder(5)    
     for edge in edges: edge.set_zorder(1)   
@@ -33,14 +32,13 @@ def drawGraph():
     return fig, ax
 
 #animation
-def path_animation(file):
-    G, pos = GenMap()
-    fig, ax = drawGraph()
-    path = getPath(file)
+def path_animation(G, pos, path):
+
+    fig, ax = drawGraph(G, pos)
 
     path_dot = ax.scatter([], [], color='violet', s=630*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
     path_line, = ax.plot([], [], color='violet', linewidth=4, zorder=3, alpha = 0.8)
-    passed_line, = ax.plot([], [], color='gray', linewidth=2, zorder=2, alpha = 0.8)
+    passed_line, = ax.plot([], [], color='black', linewidth=3, zorder=2, alpha = 0.7)
 
     ax.axis('off')
     title_text = ax.set_title("Path Animation: Step 0")
@@ -63,7 +61,8 @@ def path_animation(file):
         color='violet',           
         zorder=3, 
         arrowstyle='-|>',       
-        mutation_scale=20 * ratio 
+        mutation_scale=20 * ratio,
+        linewidth = 4
     )
     ax.add_patch(nav_arrow)
     last_u_vec = np.array([0.0, 1.0])
@@ -89,9 +88,9 @@ def path_animation(file):
         passed_line.set_data(full_line_coords[:, 0], full_line_coords[:, 1])
 
         #arrow (direction)
-        if eff_frame > 0 and eff_frame % 20 != 0:
+        if eff_frame > 0 and eff_frame % 20 <= 17 and eff_frame % 20 >= 3:
             prev_pos = all_path_points[eff_frame - 1]
-            vec = current_pos - prev_pos
+            vec = all_path_points[eff_frame] - prev_pos
             dist = np.linalg.norm(vec)
             if dist > 1e-5: 
                 last_u_vec = vec / dist 
