@@ -124,22 +124,25 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, re
         elif data_type == "TREASURE":
             Treasure = data
         elif data_type == "PATH":
+            Path_json = []
             Path_list = []
             for i in data:
                 json_dict = {
                     "NODE": i[0],
                     "MOVE": mapping_move.get(i[1])
                 }
-                Path_list.append(json_dict)
+                Path_json.append(json_dict)
+                Path_list.append((i[0], mapping_move.get(i[1])))
                 path_queue.put((i[0], mapping_move.get(i[1])))
             json_str_buf = json.dumps(Path_list)
             log.debug(f"[Path] - Path data: {json_str_buf}")
-            #path_queue.put(json_str_buf)
+            #log.debug(f"[Path] - Path data: {Path_list}")
 
 
 
 
 def current_status_handler(status: dict, startPoint: int, limit: float, start_time: float):
+    output_time = start_time
     if "end_time" not in status:
         status["end_time"] = start_time + limit
     while True:
@@ -154,7 +157,10 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
         else:
             status["current_node"] = Image_path[-1]
             status["step"] = len(Image_path)
+            
         cost_time = status["end_time"] - time.time()
         status["time_left"] = cost_time
-        #log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
+        if time.time() - output_time >= 5:
+            log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
+            output_time = time.time()
         time.sleep(0.2)
