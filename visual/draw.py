@@ -5,6 +5,7 @@ import matplotlib.patches as patches
 import numpy as np
 from MapLayout import GenMap
 from getPath import getPath
+PER_POINT = 10
 
 ratio = 1
 def drawGraph(G, pos, treasure):
@@ -59,7 +60,8 @@ def path_animation(G, pos, path, treasure):
     ax.axis('off')
     title_text = ax.set_title("Path Animation: Step 0")
 
-    def get_line(p0, p2, num_points=21):
+    
+    def get_line(p0, p2, num_points=PER_POINT+1):
         p0, p2 = np.array(p0), np.array(p2)
         return np.linspace(p0, p2, num_points)
     
@@ -90,7 +92,7 @@ def path_animation(G, pos, path, treasure):
         nonlocal last_u_vec, score
         #update node
         eff_frame = min(frame, len(all_path_points)-1)
-        plot_idx = eff_frame // 20
+        plot_idx = eff_frame // PER_POINT
         current_node = path[plot_idx]
         current_pos = pos[current_node]
         all_plots.append(current_pos)
@@ -105,7 +107,7 @@ def path_animation(G, pos, path, treasure):
         passed_line.set_data(full_line_coords[:, 0], full_line_coords[:, 1])
 
         #arrow (direction)
-        if eff_frame > 0 and eff_frame % 20 <= 17 and eff_frame % 20 >= 3:
+        if eff_frame > 0 and eff_frame % PER_POINT <= PER_POINT -2 and eff_frame % PER_POINT >= 2:
             prev_pos = all_path_points[eff_frame - 1]
             vec = all_path_points[eff_frame] - prev_pos
             dist = np.linalg.norm(vec)
@@ -120,7 +122,7 @@ def path_animation(G, pos, path, treasure):
 
         changed_artists = [path_dot, path_line, passed_line, nav_arrow]
 
-        if eff_frame % 20 == 0:    
+        if eff_frame % PER_POINT == 0:    
             if current_node in treasure_map:
                 score += treasure_map[current_node]
             title_text.set_text(f"Path Animation: Step {plot_idx} (Node: {current_node})\nScore: {score}")
@@ -129,12 +131,11 @@ def path_animation(G, pos, path, treasure):
         return changed_artists
 
     ani = animation.FuncAnimation(
-        fig, update, frames=len(all_path_points)+30, interval=33, blit=True, repeat=False
+        fig, update, frames=len(all_path_points)+30, interval=50, blit=True, repeat=False
     )
 
-    writer = animation.FFMpegWriter(fps=30, bitrate=1800,extra_args=['-preset', 'ultrafast'])
-
-    ani.save('path_animation.mp4', writer=writer, dpi = 150)
+    writer = animation.FFMpegWriter(fps=30, codec='libx264', bitrate=1500, extra_args=['-pix_fmt', 'yuv420p','-preset', 'ultrafast', '-threads', '0', '-crf', '22'])
+    ani.save('path_animation.mp4', writer=writer, dpi = 125)
 
 
 if __name__ == "__main__":
