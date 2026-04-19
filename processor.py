@@ -16,23 +16,31 @@ log = logging.getLogger(__name__)
 
 mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': 'b'}
 Passed_path = []
+send_buffer = []
+send_idx = 0
 ingame = False
 
 
 #處理即時資訊
 def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Queue, path_queue: queue.Queue, restart_decision: threading.Event, ignore_event: threading.Event):
-    global ingame
+    global ingame, Passed_path, send_buffer, send_idx
     log.info('[Action] - waiting for action')
     def initial_command():
         output_str = ""
         if path_queue.qsize() < 3 and path_queue.qsize() >= 0:
             for i in range(path_queue.qsize()):
-                output_str += f"{path_queue.get()[1]}\n"
+                single_action = path_queue.get()
+                output_str += f"{single_action[1]}\n"
+                send_buffer.append(single_action[0])
             bridge.send(output_str)
             Passed_path.append(status["current_node"])
+            log.debug(Passed_path)
             log.info(output_str.replace('\n', ' '))
         elif path_queue.qsize() >= 3:
-            output_str = f"{path_queue.get()[1]}\n{path_queue.get()[1]}\n{path_queue.get()[1]}\n"
+            for i in range(3):
+                single_action = path_queue.get()
+                output_str += f"{single_action[1]}\n"
+                send_buffer.append(single_action[0])
             bridge.send(output_str)
             Passed_path.append(status["current_node"])
             log.info(output_str.replace('\n', ' '))
@@ -51,8 +59,10 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
         elif action == "NN" and ingame:
             try:
                 item = path_queue.get(block=False)
-                Passed_path.append(item[0])
                 bridge.send(f'{item[1]}\n')
+                send_buffer.append(item[0])
+                Passed_path.append(send_buffer[send_idx])
+                send_idx += 1
                 log.info(f"[Action] - send command: {item[1]}")
                 log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
@@ -61,8 +71,10 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
             log.info("[Action] - reach treasure point!")
             try:
                 item = path_queue.get(block=False)
-                Passed_path.append(item[0])
                 bridge.send(f'{item[1]}\n')
+                send_buffer.append(item[0])
+                Passed_path.append(send_buffer[send_idx])
+                send_idx += 1
                 log.info(f"[Action] - send command: {item[1]}")
                 log.debug(f"Passed_path: {Passed_path}")
             except queue.Empty:
