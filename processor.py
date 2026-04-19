@@ -156,5 +156,5 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             status["step"] = len(Image_path)
         cost_time = status["end_time"] - time.time()
         status["time_left"] = cost_time
-        log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
-        time.sleep(1)
+        #log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']}")
+        time.sleep(0.2)
