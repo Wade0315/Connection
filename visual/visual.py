@@ -11,9 +11,9 @@ from draw import path_animation
 def main():
     FILE = "../maze.csv"
     path = getPath(FILE)
-    G, pos = GenMap(FILE)
-    drawGraph(G, pos)
-    path_animation(G, pos, path)
+    G, pos, treasure = GenMap(FILE)
+    drawGraph(G, pos, treasure)
+    path_animation(G, pos, path, treasure)
 
 if __name__ == "__main__":
     main()

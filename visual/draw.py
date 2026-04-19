@@ -7,7 +7,7 @@ from MapLayout import GenMap
 from getPath import getPath
 
 ratio = 1
-def drawGraph(G, pos):
+def drawGraph(G, pos, treasure):
     x_coords = [p[0] for p in pos.values()]
     y_coords = [p[1] for p in pos.values()]
     
@@ -17,24 +17,39 @@ def drawGraph(G, pos):
     fig_w = max(10, span_x * 0.3)
     fig_h = max(10, span_y * 0.3)
 
-    node_labels = {n: str(n) for n in G.nodes()} 
-    
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))   
     ax.set_aspect('equal')
-    nodes = nx.draw_networkx_nodes(G, pos, node_size=630*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
+
+
+    
+    treasure_map = {node_id: score for node_id, score in treasure}
+    node_labels = {}
+    for n in G.nodes():
+        if n in treasure_map:
+            node_labels[n] = f"{n}\n({treasure_map[n]*10})"
+        else:
+            node_labels[n] = str(n)
+    treasure_node_ids = list(treasure_map.keys())
+
+    standard_nodes = [n for n in G.nodes() if n not in treasure_node_ids]
+    s_nodes = nx.draw_networkx_nodes(G, pos, nodelist=standard_nodes, node_size=630*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
+    s_nodes.set_zorder(5)  
+    t_nodes = nx.draw_networkx_nodes(G, pos, nodelist=treasure_node_ids, node_size=800*ratio, node_color='lightgreen', edgecolors='brown', linewidths=1.2)
+    t_nodes.set_zorder(6)
+    
     edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='lightblue', node_size=630*ratio, alpha = 0.6)
-    labels = nx.draw_networkx_labels(G, pos, labels = node_labels, font_size=9)
-    nodes.set_zorder(5)    
     for edge in edges: edge.set_zorder(1)   
-    for t in labels.values(): t.set_zorder(15) # 手動設定    
+
+    s_labels = nx.draw_networkx_labels(G, pos, labels = node_labels, font_size=9)
+    for l in s_labels.values(): l.set_zorder(15)
     plt.axis('off')
     plt.savefig('static_graph.png', dpi=300, bbox_inches='tight')
     return fig, ax
 
 #animation
-def path_animation(G, pos, path):
+def path_animation(G, pos, path, treasure):
 
-    fig, ax = drawGraph(G, pos)
+    fig, ax = drawGraph(G, pos, treasure)
 
     path_dot = ax.scatter([], [], color='violet', s=630*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
     path_line, = ax.plot([], [], color='violet', linewidth=4, zorder=3, alpha = 0.8)
