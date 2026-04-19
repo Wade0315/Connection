@@ -32,12 +32,12 @@ def drawGraph(G, pos, treasure):
     treasure_node_ids = list(treasure_map.keys())
 
     standard_nodes = [n for n in G.nodes() if n not in treasure_node_ids]
-    s_nodes = nx.draw_networkx_nodes(G, pos, nodelist=standard_nodes, node_size=630*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
+    s_nodes = nx.draw_networkx_nodes(G, pos, nodelist=standard_nodes, node_size=800*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
     s_nodes.set_zorder(5)  
     t_nodes = nx.draw_networkx_nodes(G, pos, nodelist=treasure_node_ids, node_size=800*ratio, node_color='lightgreen', edgecolors='brown', linewidths=1.2)
     t_nodes.set_zorder(6)
     
-    edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='lightblue', node_size=630*ratio, alpha = 0.6)
+    edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='lightblue', node_size=800*ratio, alpha = 0.6)
     for edge in edges: edge.set_zorder(1)   
 
     s_labels = nx.draw_networkx_labels(G, pos, labels = node_labels, font_size=9)
@@ -51,7 +51,7 @@ def path_animation(G, pos, path, treasure):
 
     fig, ax = drawGraph(G, pos, treasure)
 
-    path_dot = ax.scatter([], [], color='violet', s=630*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
+    path_dot = ax.scatter([], [], color='violet', s=800*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
     path_line, = ax.plot([], [], color='violet', linewidth=4, zorder=3, alpha = 0.8)
     passed_line, = ax.plot([], [], color='black', linewidth=3, zorder=2, alpha = 0.7)
 
@@ -128,9 +128,9 @@ def path_animation(G, pos, path, treasure):
         fig, update, frames=len(all_path_points)+30, interval=33, blit=True, repeat=False
     )
 
-    writer = animation.FFMpegWriter(fps=30, bitrate=1800)
+    writer = animation.FFMpegWriter(fps=30, bitrate=1800,extra_args=['-preset', 'ultrafast'])
 
-    ani.save('path_animation.mp4', writer=writer)
+    ani.save('path_animation.mp4', writer=writer, dpi = 150)
 
 
 if __name__ == "__main__":
