@@ -129,10 +129,10 @@ def aniAlgo(G, pos, Paths):
     fig, ax, inter_label_objects = drawGraph(G, pos)
     # 2. 建立一個「空的」或「初始位置」的 Scatter 物件，並將其指派給變數 path_dot
     # 動態更新的對象
-    path_dot = ax.scatter([], [], color='violet', s=630*ratio, zorder=5, label='Current Position', edgecolors='navy', linewidths=0.8)
+    path_dot = ax.scatter([], [], color='violet', s=630*ratio, zorder=5, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
 
     # 保留走過的路徑線條，可以先建立一個空的 Line2D
-    path_line, = ax.plot([], [], color='violet', linewidth=2, zorder=1)
+    path_line, = ax.plot([], [], color='violet', linewidth=2, zorder=1, alpha = 0.8)
 
     ax.axis('off')
     title_text = ax.set_title("Path Animation: Step 0")
