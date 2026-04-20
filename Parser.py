@@ -85,7 +85,7 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
             process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            process.stdin.write(f"{status["current_node"]} {status["time_left"]}\n")
+            process.stdin.write(f"{status["current_node"]} {status["time_left"]*1000}\n")
             process.stdin.flush()
             log.info(f"enter startPoint: {status["current_node"]}, time_left: {status["time_left"]}")
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:

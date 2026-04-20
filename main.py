@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # TODO : Fill in the following information
 MAZE_FILE = "data/big_maze_114.csv"
-STARTPOINT = 1
+STARTPOINT = 25
 LIMIT = 70
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
@@ -101,7 +101,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, restart_decision), daemon=True).start()
-        start_time = time.time()*1000
+        start_time = time.time()
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
         try:
             time.sleep(1)
