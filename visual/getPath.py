@@ -52,7 +52,7 @@ def getPath(maze_file: str):
             process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            process.stdin.write(f"1 1000\n")
+            process.stdin.write(f"1 1000000\n")
             process.stdin.flush()
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
             return (Paths)
