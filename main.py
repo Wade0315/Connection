@@ -28,9 +28,9 @@ setup_logging()
 log = logging.getLogger(__name__)
 
 # TODO : Fill in the following information
-MAZE_FILE = "data/medium_maze.csv"
+MAZE_FILE = "data/big_maze_114.csv"
 STARTPOINT = 1
-LIMIT = 1000
+LIMIT = 70000
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
 BT_PORT = "/dev/ttyUSB0"
@@ -101,13 +101,13 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, restart_decision), daemon=True).start()
-        start_time = time.time()
+        start_time = time.time()*1000
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
-
         try:
             time.sleep(1)
             while not path_queue.empty():
-                log.info(path_queue.get())
+                path_queue.get()
+                #log.info(path_queue.get())
             time.sleep(5)
             uid_queue.put("33333333")
             restart_decision.set()
