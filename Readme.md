@@ -1,7 +1,7 @@
 settings:
 1. connect Vscode in Ubuntu
 2. setup venv env
-3. pip install pyserial numpy queue socketio
+3. pip install pyserial numpy requests python-socketio
 4. in extension install serial monitor(from microsoft)
 5. use Ctrl + shift + P, click "View: Toggle Serial Monitor"
 
