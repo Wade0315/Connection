@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 # TODO : Fill in the following information
 MAZE_FILE = "data/big_maze_114.csv"
 STARTPOINT = 1
-LIMIT = 70000
+LIMIT = 70
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
 BT_PORT = "/dev/ttyUSB0"

@@ -20,7 +20,7 @@ def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_q
 
         if msg:
             log.info(f"\r[HM10]: {msg}")
-        if msg == "NN":
+        if "NN" in msg:
             event_queue.put(msg)
             log.info(f"put {msg} to event_queue")
         elif "please input ready" in msg:

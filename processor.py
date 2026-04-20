@@ -164,7 +164,7 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
     if "end_time" not in status:
         status["end_time"] = start_time + limit
     while True:
-        if status["time_left"] <= 100:
+        if status["time_left"] <= 1e-2:
             log.debug("break")
             os._exit(0)
             break
@@ -176,9 +176,9 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             status["current_node"] = Image_path[-1]
             status["step"] = len(Image_path)
             
-        cost_time = status["end_time"] - time.time()*1000
+        cost_time = status["end_time"] - time.time()
         status["time_left"] = cost_time
-        if time.time()*1000 - output_time >= 500:
-            log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']/1000:.3f}s")
-            output_time = time.time()*1000
+        if time.time() - output_time >= 2:
+            log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']:.3f}s")
+            output_time = time.time()
         time.sleep(0.2)
