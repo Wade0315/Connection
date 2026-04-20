@@ -6,6 +6,7 @@ import collections
 FILE = "../maze.csv"
 SPACE = 3
 def GenMap(file) :
+    startPoint = 25
     df = pd.read_csv(file, index_col='index')
     G = nx.DiGraph()
     TreasureIdx = []
@@ -19,10 +20,10 @@ def GenMap(file) :
             if pd.notna(row[col_name]):
                 G.add_edge(index, int(row[col_name]), direction=col_name)                 
                 near += 1
-        if near <= 1 and index != 1:
+        if near <= 1:
             TreasureIdx.append(index)
-    queue = collections.deque([1])
-    visited = {1}
+    queue = collections.deque([startPoint])
+    visited = {startPoint}
     while queue:
         u = queue.popleft()
         for v in G.neighbors(u):
@@ -30,7 +31,7 @@ def GenMap(file) :
                 direction = G[u][v]['direction']
                 center_x_y[v-1] = center_x_y[u-1] + dir_map[direction]
                 if v in TreasureIdx:
-                    treasure.append((v, 10 * int(abs(center_x_y[v-1][0])+abs(center_x_y[v-1][1]))))
+                    treasure.append((v, 10 * int(abs(center_x_y[v-1][0] - center_x_y[startPoint-1][0])+abs(center_x_y[v-1][1] - center_x_y[startPoint-1][1]))))
                 #print(f"{v}: {center_x_y[v-1]} by {u}")
                 visited.add(v)
                 queue.append(v) 

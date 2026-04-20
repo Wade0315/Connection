@@ -12,7 +12,7 @@ mapping_move = {'Forward': 'f', 'Turn-Right': 'r', 'Turn-Left': 'l', 'U-Turn': '
 
 
 def getPath(maze_file: str):
-    process = subprocess.Popen(["../execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(["../visual_execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
     start = False
     Paths = []
     readingPath = False
@@ -52,7 +52,7 @@ def getPath(maze_file: str):
             process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            process.stdin.write(f"1 1000000\n")
+            process.stdin.write(f"25 70000\n")
             process.stdin.flush()
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
             return (Paths)
@@ -63,7 +63,7 @@ def getPath(maze_file: str):
             
 
 if __name__ == "__main__":
-    FILE = "../data/medium_maze.csv"
+    FILE = "../data/big_maze_114.csv"
     print(getPath(FILE))
 
 
