@@ -18,14 +18,17 @@ def getPath(maze_file: str):
     readingPath = False
     pathIdx = []
     last_node = 0
+    path_cost = 0
+    cumulate_cost = {}
 
     def ReadPath():
-        nonlocal line_str, readingPath, Paths, pathIdx, last_node
+        nonlocal line_str, readingPath, Paths, pathIdx, last_node, path_cost, cumulate_cost
         if readingPath:
             if line_str == "Submission complete.":
                 readingPath = False
                 Paths.extend(pathIdx)
-            
+                cumulate_cost[pathIdx[-1]] =  path_cost
+                #print(cumulate_cost)
             raw_path_idx = re.search(r'\s*Step\s*(\d+)\s*:\s*\[Node\s*:\s*(\d+)\s*,\s*Facing\s*:\s*([a-zA-Z]+)\s*\]', line_str) 
             if raw_path_idx is not None:
                 step = int(raw_path_idx.group(1))
@@ -37,8 +40,9 @@ def getPath(maze_file: str):
                     pathIdx.append(idx)
                     last_node = idx
         
-        startMission = re.search(r'\[Mission #(\d+)\] Heading to target node:\s+\d+', line_str)
+        startMission = re.search(r'\[Mission #(\d+)\] Heading to target node:\s+\d+,\s*cumulate cost:\s*(\d+\.\d+)', line_str)
         if startMission and not readingPath:
+            path_cost = float(startMission.group(2))
             readingPath = True
             pathIdx = []    
 
@@ -52,10 +56,10 @@ def getPath(maze_file: str):
             process.stdin.write(f"{maze_file}\n")
             process.stdin.flush()
         elif "Please enter \"startPoint\" , \"total cost limit\"" in line_str:
-            process.stdin.write(f"25 70000\n")
+            process.stdin.write(f"25 65000\n")
             process.stdin.flush()
         elif "[message] There is no remain treasure point on the map. Mission completed" in line_str:
-            return (Paths)
+            return Paths, cumulate_cost
         elif "Do you want to restart [Y/N]:" in line_str:
             process.stdin.write(f"N\n")
             process.stdin.flush()

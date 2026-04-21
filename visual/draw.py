@@ -48,7 +48,7 @@ def drawGraph(G, pos, treasure):
     return fig, ax
 
 #animation
-def path_animation(G, pos, path, treasure):
+def path_animation(G, pos, path, treasure, cumulate_cost):
 
     fig, ax = drawGraph(G, pos, treasure)
     treasure_map = {node_id: score for node_id, score in treasure}
@@ -88,8 +88,9 @@ def path_animation(G, pos, path, treasure):
     all_plots = []  #node
     all_path_points = np.array(path_points) #line
     score = 0
+    cost = 0
     def update(frame):
-        nonlocal last_u_vec, score
+        nonlocal last_u_vec, score, cost
         #update node
         eff_frame = min(frame, len(all_path_points)-1)
         plot_idx = eff_frame // PER_POINT
@@ -125,7 +126,8 @@ def path_animation(G, pos, path, treasure):
         if eff_frame % PER_POINT == 0:    
             if current_node in treasure_map and frame <= eff_frame:
                 score += treasure_map[current_node]
-            title_text.set_text(f"Path Animation: Step {plot_idx} (Node: {current_node})\nScore: {score}")
+                cost = cumulate_cost[current_node]
+            title_text.set_text(f"Path Animation\nStep {plot_idx} (Node: {current_node})\nScore: {score},  cost: {cost}")
             changed_artists.append(title_text) 
 
         return changed_artists

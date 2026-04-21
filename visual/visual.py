@@ -10,10 +10,10 @@ from draw import path_animation
 
 def main():
     FILE = "../data/big_maze_114.csv"
-    path = getPath(FILE)
+    path, cumulate_cost = getPath(FILE)
     G, pos, treasure = GenMap(FILE)
     drawGraph(G, pos, treasure)
-    path_animation(G, pos, path, treasure)
+    path_animation(G, pos, path, treasure, cumulate_cost)
 
 if __name__ == "__main__":
     main()
