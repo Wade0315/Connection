@@ -130,7 +130,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, restart_decision, ignore_event), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
-            test_moves = [(1, 'f'), (2, 'f'), (3, 'f'), (4, 'f'), (5, 'r')]
+            test_moves = [(1, 'r'), (2, 'b'), (3, 'f'), (4, 'b'), (5, 'l'), (6, 'b')]
             while True:
                 if path_queue.empty():
                     for move in test_moves:

@@ -9,31 +9,32 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
 def background_listener(bridge: HM10ESP32Bridge, event_queue: queue.Queue, uid_queue: queue.Queue, ignore_event: threading.Event):
     while True:
-        msg = bridge.listen()
+        with open("data.txt", "a") as data:
+            msg = bridge.listen()
 
-        if ignore_event.is_set():
-            log.debug(f"remove trash report")
-            continue
+            if ignore_event.is_set():
+                log.debug(f"remove trash report")
+                continue
 
-        if msg:
-            log.info(f"\r[HM10]: {msg}")
-        if "NN" in msg:
-            event_queue.put("NN")
-            log.info(f"put {"NN"} to event_queue")
-        elif "Please input ready" in msg:
-            print("Please input ready")
-            print("You: ", end = '', flush=True) 
-            
-        match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
-        if match:
-            uid_value = match.group(1)
-            uid_queue.put(uid_value)
-            log.info(f'get uid: {uid_value}')
-            event_queue.put("reach")
-        time.sleep(0.08)
+            if msg:
+                log.info(f"\r[HM10]: {msg}")
+                data.write(f"{msg}\n")
+            if "NN" in msg:
+                event_queue.put("NN")
+                log.info(f"put {"NN"} to event_queue")
+            elif "Please input ready" in msg:
+                print("Please input ready", flush=True)
+                print("You: ", end = '', flush=True) 
+                
+            match = re.search(r"([0-9A-Fa-f]{8})", msg)   # eat "{UID}"
+            if match:
+                uid_value = match.group(1)
+                uid_queue.put(uid_value)
+                log.info(f'get uid: {uid_value}')
+                event_queue.put("reach")
+            time.sleep(0.08)
 
 def hm10_main(bridge: HM10ESP32Bridge, team_name: str):
 
@@ -59,8 +60,6 @@ def hm10_main(bridge: HM10ESP32Bridge, team_name: str):
         sys.exit(0)
 
     log.info(f"✨ Ready! Connected to {team_name}")
-
-
 
 
 
