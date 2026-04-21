@@ -25,9 +25,9 @@ def setup_logging():
     
     root_logger.addHandler(handler)
 
-    logging.getLogger("Parser").setLevel(logging.INFO)
-    logging.getLogger("scoreboard").setLevel(logging.DEBUG)
-    logging.getLogger("processor").setLevel(logging.DEBUG)
+    logging.getLogger("Parser").setLevel(logging.WARNING)
+    logging.getLogger("scoreboard").setLevel(logging.WARNING)
+    logging.getLogger("processor").setLevel(logging.WARNING)
     logging.getLogger("BT_setup").setLevel(logging.DEBUG)
 
 
