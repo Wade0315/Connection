@@ -122,8 +122,8 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status
         uid = uid_queue.get() 
         log.debug(f"[Score] - Get uid: {uid}")
         score, time_remaining = scoreboard.add_UID(uid)
-        if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
-            status["end_time"] = time_remaining + time.time()
+        # if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
+        #     status["end_time"] = time_remaining + time.time()
         current_score = scoreboard.get_current_score()
         
         log.info(f"[Score] - Current score: {current_score}")

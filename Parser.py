@@ -13,44 +13,11 @@ log = logging.getLogger(__name__)
 
 def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
     process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
-
     start = False
-    Vertexs_string = []
-    vertex = ""
     Paths = []
     readingPath = False
     pathIdx = []
     what_Mission = 0
-
-    def ReadVertexs():
-        nonlocal start, line_str, Vertexs_string, vertex
-        if line_str == 'Graph end':
-            start = False
-            log.debug("python end")
-            Vertexs = []
-            for element in Vertexs_string:
-                OriIdx = int(re.search(r'OriIdx:\s*(\d+)', element).group(1))
-                dir = int(re.search(r'dir:\s*(\d+)', element).group(1))
-                RealIdx = int(re.search(r'RealIdx:\s*(\d+)', element).group(1))
-                score = int(re.search(r'score:\s*(\d+)', element).group(1))
-                edges = []
-                for w, t in re.findall(r'weight\s*:\s*(\d+),\s*terminal\s*:\s*(\d+)', element):
-                    edges.append([int(w), int(t)])
-                Vertexs.append([OriIdx, dir, RealIdx, score] + edges)
-            return ("GRAPH", Vertexs)
-        if start:
-            if line_str == "Vertex {":
-                vertex = ""
-            elif line_str == "}":
-                Vertexs_string.append(vertex)
-            else:
-                vertex += line_str 
-        
-        if line_str == 'Graph start':
-            start = True
-            log.debug("python start")
-        
-        return None
 
     def ReadPath():
         nonlocal line_str, readingPath, Paths, pathIdx, what_Mission
@@ -76,7 +43,6 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
 
     #read stdout deal with stdin
     for line_str in iter(process.stdout.readline, ''):
-        line = line_str #include \n
         line_str = line_str.rstrip("\n")
         if "Do you want to load a file?[Y/N]:" in line_str:
             process.stdin.write("Y\n")
@@ -116,8 +82,6 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
 
-        res_v = ReadVertexs()
-        if res_v: yield res_v
         res_p = ReadPath()
         if res_p: yield res_p
             
@@ -129,8 +93,10 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
 
 
 if __name__ == "__main__":
-    process = subprocess.Popen(['execute'], stdout = subprocess.PIPE, text = True, bufsize = 1)
-    for data_type, data in Parse(process):
+    MAZE_FILE = "data/big_maze_114.csv"
+    status = {"current_node": 25, "step": 1, "time_left": 65000}
+    restart_decision = threading.Event()
+    for data_type, data in Parse(MAZE_FILE, status, restart_decision):
         if data_type == "GRAPH":
             log.debug('read graph!')
         elif data_type == "PATH":

@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 # TODO : Fill in the following information
 MAZE_FILE = "data/big_maze_114.csv"
 STARTPOINT = 25
-LIMIT = 70
+LIMIT = 65
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
 BT_PORT = "/dev/ttyUSB0"
@@ -124,14 +124,13 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
 
     elif mode == "2": #crosstest
         log.info("Mode 2: cross test.")
-        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
         bridge = HM10ESP32Bridge(port=bt_port)
         BT_setup.hm10_main(bridge, team_name)
         threading.Thread(target=BT_setup.background_listener, args=(bridge, event_queue, uid_queue, ignore_event), daemon=True).start()
         threading.Thread(target=processor.action_processor, args=(bridge, status, event_queue, path_queue, restart_decision, ignore_event), daemon=True).start()
 
         def auto_refill_path(path_queue: queue.Queue):
-            test_moves = [(2, 'f'), (3, 'l'), (6, 'f'), (9, 'b'), (6, 'f'), (3, 'r'), (2, 'r'), (5, 'f'), (8, 'f'), (11, 'r'), (12, 'b'), (11, 'f'), (10, 'b'), (11, 'r'), (8, 'f'), (5, 'r'), (4, 'r')]
+            test_moves = [(1, 'f'), (2, 'f'), (3, 'f'), (4, 'f'), (5, 'r')]
             while True:
                 if path_queue.empty():
                     for move in test_moves:
@@ -147,8 +146,8 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                         event_queue.put(user_msg)
                         start_time = time.time()
                         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
-                        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
-                        threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
+                        # scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
+                        # threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
             log.info("end test")
@@ -181,14 +180,14 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
 #======================================================================================================================================================
 
 
-    elif mode == "4":   #scoreboard test
+    elif mode == "4":   #status test
         log.info("Mode 4: current status test.")
         start_time = time.time()
         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
         i = 0
         try:
             while True:
-                print(i)
+                print(i, end = ', ', flush=True)
                 i += 1
                 time.sleep(1)
         except KeyboardInterrupt:
