@@ -178,7 +178,7 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             
         cost_time = status["end_time"] - time.time()
         status["time_left"] = cost_time
-        if time.time() - output_time >= 2:
+        if time.time() - output_time >= 0.5:
             log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']:.3f}s")
             output_time = time.time()
         time.sleep(0.2)

@@ -28,8 +28,8 @@ setup_logging()
 log = logging.getLogger(__name__)
 
 # TODO : Fill in the following information
-MAZE_FILE = "data/big_maze_114.csv"
-STARTPOINT = 25
+MAZE_FILE = "./data/medium_maze.csv"
+STARTPOINT = 1
 LIMIT = 65
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"

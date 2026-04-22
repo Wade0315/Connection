@@ -40,6 +40,7 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
             readingPath = True
             what_Mission = int(startMission.group(1))
             pathIdx = []    
+            log.info("read")
 
     #read stdout deal with stdin
     for line_str in iter(process.stdout.readline, ''):
