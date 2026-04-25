@@ -1,0 +1,161 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import matplotlib.patches as patches  
+import numpy as np
+PER_POINT = 10
+
+ratio = 1
+def drawGraph(G, pos, treasure):
+    x_coords = [p[0] for p in pos.values()]
+    y_coords = [p[1] for p in pos.values()]
+    
+    span_x = max(x_coords) - min(x_coords)
+    span_y = max(y_coords) - min(y_coords)
+    
+    fig_w = max(10, span_x * 0.3)
+    fig_h = max(10, span_y * 0.3)
+
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))   
+    ax.set_aspect('equal')
+
+
+    
+    treasure_map = {node_id: score for node_id, score in treasure}
+    node_labels = {}
+    for n in G.nodes():
+        if n in treasure_map:
+            node_labels[n] = f"{n}\n({treasure_map[n]})"
+        else:
+            node_labels[n] = str(n)
+    treasure_node_ids = list(treasure_map.keys())
+
+    standard_nodes = [n for n in G.nodes() if n not in treasure_node_ids]
+    s_nodes = nx.draw_networkx_nodes(G, pos, nodelist=standard_nodes, node_size=800*ratio, node_color='lightblue', edgecolors='navy', linewidths=0.8)
+    s_nodes.set_zorder(5)  
+    t_nodes = nx.draw_networkx_nodes(G, pos, nodelist=treasure_node_ids, node_size=800*ratio, node_color='lightgreen', edgecolors='brown', linewidths=1.2)
+    t_nodes.set_zorder(6)
+    
+    edges = nx.draw_networkx_edges(G, pos, arrowstyle='-', arrowsize=10*ratio, edge_color='lightblue', node_size=800*ratio, alpha = 0.6)
+    for edge in edges: edge.set_zorder(1)   
+
+    s_labels = nx.draw_networkx_labels(G, pos, labels = node_labels, font_size=9)
+    for l in s_labels.values(): l.set_zorder(15)
+    plt.axis('off')
+    plt.savefig('static_graph.png', dpi=300, bbox_inches='tight')
+    return fig, ax
+
+#animation
+def path_animation(G, pos, path, treasure, cumulate_cost):
+
+    fig, ax = drawGraph(G, pos, treasure)
+    treasure_map = {node_id: score for node_id, score in treasure}
+
+    path_dot = ax.scatter([], [], color='violet', s=800*ratio, zorder=7, label='Current Position', edgecolors='navy', linewidths=0.8, alpha = 0.8)
+    path_line, = ax.plot([], [], color='violet', linewidth=4, zorder=3, alpha = 0.8)
+    passed_line, = ax.plot([], [], color='black', linewidth=3, zorder=2, alpha = 0.7)
+
+    ax.axis('off')
+    title_text = ax.set_title("Path Animation: Step 0")
+
+    
+    def get_line(p0, p2, num_points=PER_POINT+1):
+        p0, p2 = np.array(p0), np.array(p2)
+        return np.linspace(p0, p2, num_points)
+    
+    path_points = []
+    for i in range(len(path)-1):
+        u, v = path[i], path[i+1]
+        segment = get_line(pos[u], pos[v])
+        if i == 0:
+            path_points.extend(segment)
+        else:
+            path_points.extend(segment[1:])
+
+    nav_arrow = patches.FancyArrowPatch(
+        (0, 0), (0, 0), 
+        color='violet',           
+        zorder=3, 
+        arrowstyle='-|>',       
+        mutation_scale=20 * ratio,
+        linewidth = 4
+    )
+    ax.add_patch(nav_arrow)
+    last_u_vec = np.array([0.0, 1.0])
+
+    all_plots = []  #node
+    all_path_points = np.array(path_points) #line
+   
+    total_frames = len(all_path_points)
+    known_frames = [0]
+    start_cost = cumulate_cost[path[0]] if path[0] in treasure_map else 0
+    known_costs = [start_cost]  
+    for i, node in enumerate(path):
+        if node in treasure_map and node in cumulate_cost:
+            frame_idx = i * PER_POINT
+            if frame_idx != 0:
+                known_frames.append(frame_idx)
+                known_costs.append(cumulate_cost[node])
+    if known_frames[-1] < total_frames - 1:
+        known_frames.append(total_frames - 1)
+        known_costs.append(known_costs[-1])
+    all_frames_indices = np.arange(total_frames)
+    frame_costs = np.interp(all_frames_indices, known_frames, known_costs)
+    score = 0
+    cost = 0
+    def update(frame):
+        nonlocal last_u_vec, score, cost
+        #update node
+        eff_frame = min(frame, len(all_path_points)-1)
+        plot_idx = eff_frame // PER_POINT
+        current_node = path[plot_idx]
+        current_pos = pos[current_node]
+        all_plots.append(current_pos)
+        path_dot.set_offsets(np.array(all_plots))
+
+        #update line
+        tail_length = 7 
+        start_idx = max(0, eff_frame - tail_length)
+        current_line_coords = all_path_points[start_idx : eff_frame+1]
+        full_line_coords = all_path_points[0 : eff_frame+1]
+        path_line.set_data(current_line_coords[:, 0], current_line_coords[:, 1])
+        passed_line.set_data(full_line_coords[:, 0], full_line_coords[:, 1])
+
+        #arrow (direction)
+        if eff_frame > 0 and eff_frame % PER_POINT <= PER_POINT -2 and eff_frame % PER_POINT >= 2:
+            prev_pos = all_path_points[eff_frame - 1]
+            vec = all_path_points[eff_frame] - prev_pos
+            dist = np.linalg.norm(vec)
+            if dist > 1e-5: 
+                last_u_vec = vec / dist 
+            nav_arrow.set_alpha(1.0)       
+        else:
+            nav_arrow.set_alpha(0.0)
+        arrow_len = 0.8 * ratio
+        head_pos = all_path_points[eff_frame] + last_u_vec * arrow_len
+        nav_arrow.set_positions(all_path_points[eff_frame], head_pos)
+
+        changed_artists = [path_dot, path_line, passed_line, nav_arrow]
+
+        if eff_frame % PER_POINT == 0:    
+            if current_node in treasure_map and frame <= eff_frame:
+                score += treasure_map[current_node]
+            current_cost = frame_costs[eff_frame]
+            title_text.set_text(f"Path Animation\nStep {plot_idx} (Node: {current_node})\nScore: {score},  cost: {current_cost/1000:.3f}")
+            changed_artists.append(title_text) 
+
+        return changed_artists
+
+    ani = animation.FuncAnimation(
+        fig, update, frames=len(all_path_points)+30, interval=50, blit=True, repeat=False
+    )
+
+    writer = animation.FFMpegWriter(fps=30, codec='libx264', bitrate=1500, extra_args=['-pix_fmt', 'yuv420p','-preset', 'ultrafast', '-threads', '0', '-crf', '22'])
+    ani.save('path_animation.mp4', writer=writer, dpi = 125)
+
+
+if __name__ == "__main__":
+    drawGraph()
+    FILE = "../data/medium_maze.csv"
+    path_animation(FILE)
+
