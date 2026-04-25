@@ -9,5 +9,5 @@ env/
 *.log
 *:Zone.Identifier
 
-
-visual/
+*.mp4
+*.png
