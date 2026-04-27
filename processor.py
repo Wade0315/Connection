@@ -135,6 +135,7 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, re
     Graph = []
     Treasure = []
     received = Parse(maze_file, status, restart_decision)
+    Path_idx = []
     for data_type, data in received:
         if data_type == "GRAPH":
             Graph = data
@@ -142,19 +143,21 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, re
         elif data_type == "TREASURE":
             Treasure = data
         elif data_type == "PATH":
-            Path_json = []
-            Path_list = []
-            for i in data:
-                json_dict = {
-                    "NODE": i[0],
-                    "MOVE": mapping_move.get(i[1])
-                }
-                Path_json.append(json_dict)
-                Path_list.append((i[0], mapping_move.get(i[1])))
-                path_queue.put((i[0], mapping_move.get(i[1])))
-            json_str_buf = json.dumps(Path_list)
-            log.debug(f"[Path] - Path data: {json_str_buf}")
-            #log.debug(f"[Path] - Path data: {Path_list}")
+            Path_idx.extend(data)
+    
+    Path_json = []
+    Path_list = []
+    for i in Path_idx:
+        json_dict = {
+            "NODE": i[0],
+            "MOVE": mapping_move.get(i[1])
+        }
+        Path_json.append(json_dict)
+        Path_list.append((i[0], mapping_move.get(i[1])))
+        path_queue.put((i[0], mapping_move.get(i[1])))
+    json_str_buf = json.dumps(Path_list)
+    #log.debug(f"[Path] - Path data: {json_str_buf}")
+    log.debug(f"[Path] - Path data: {Path_list}")
 
 
 
@@ -164,10 +167,10 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
     if "end_time" not in status:
         status["end_time"] = start_time + limit
     while True:
-        if status["time_left"] <= 1e-2:
-            log.debug("break")
-            os._exit(0)
-            break
+        # if status["time_left"] <= 1e-2:
+        #     log.debug("break")
+        #     os._exit(0)
+        #     break
         Image_path = Passed_path[:]
         if not Image_path:
             status["current_node"] = startPoint
@@ -178,7 +181,7 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             
         cost_time = status["end_time"] - time.time()
         status["time_left"] = cost_time
-        if time.time() - output_time >= 0.5:
+        if time.time() - output_time >= 1:
             log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']:.3f}s")
             output_time = time.time()
         time.sleep(0.2)

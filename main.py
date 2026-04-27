@@ -28,8 +28,8 @@ setup_logging()
 log = logging.getLogger(__name__)
 
 # TODO : Fill in the following information
-MAZE_FILE = "./data/medium_maze.csv"
-STARTPOINT = 1
+MAZE_FILE = "./data/big_maze_114.csv"
+STARTPOINT = 25
 LIMIT = 65
 TEAM_NAME = "1_A_3"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
@@ -86,7 +86,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
                         event_queue.put(user_msg)
                         start_time = time.time()
                         threading.Thread(target=processor.current_status_handler, args=(status, startPoint, limit, start_time), daemon=True).start()
-                        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
+                        scoreboard = ScoreboardServer(team_name, "http://140.112.175.18")
                         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
                     log.info(f"user input: {user_msg}")
         except KeyboardInterrupt:
@@ -98,7 +98,7 @@ def main(mode: int, maze_file: str, startPoint: int, limit: float, bt_port: str,
         
     elif mode == "1":
         log.info("Mode 1: test read map.")
-        scoreboard = ScoreboardServer("Team3", "http://140.112.175.18")
+        scoreboard = ScoreboardServer(team_name, "http://140.112.175.18")
         threading.Thread(target=processor.score_processor, args=(uid_queue, scoreboard, status), daemon=True).start()
         threading.Thread(target=processor.gen_path_processor, args=(path_queue,maze_file, status, restart_decision), daemon=True).start()
         start_time = time.time()
