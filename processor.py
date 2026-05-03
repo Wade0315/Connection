@@ -185,3 +185,4 @@ def current_status_handler(status: dict, startPoint: int, limit: float, start_ti
             log.debug(f"[STATUS] - current_node: {status['current_node']}, step: {status['step']}, time_left: {status['time_left']:.3f}s")
             output_time = time.time()
         time.sleep(0.2)
+

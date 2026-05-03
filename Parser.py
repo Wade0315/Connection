@@ -12,15 +12,16 @@ log = logging.getLogger(__name__)
 
 
 def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
-    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+    process = subprocess.Popen(["./execute3"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
     start = False
     Paths = []
     readingPath = False
     pathIdx = []
     what_Mission = 0
+    is_initial_start = True
 
     def ReadPath():
-        nonlocal line_str, readingPath, Paths, pathIdx, what_Mission
+        nonlocal line_str, readingPath, Paths, pathIdx, what_Mission, is_initial_start
         if readingPath:
             if line_str == "Submission complete.":
                 readingPath = False
@@ -32,7 +33,9 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
                 idx = int(raw_path_idx.group(2))
                 dir = dir_map.get(raw_path_idx.group(3))
                 movement = raw_path_idx.group(4)
-                if what_Mission > 1 or step > 1:
+                if is_initial_start:
+                    is_initial_start = False
+                else:
                     pathIdx.append([idx, movement])
         
         startMission = re.search(r'\[Mission #(\d+)\] Heading to target node:\s+\d+', line_str)
