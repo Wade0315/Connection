@@ -11,8 +11,8 @@ dir_map = {'north': 0, 'east': 1, 'south': 2, 'west': 3}
 log = logging.getLogger(__name__)
 
 
-def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
-    process = subprocess.Popen(["./execute3"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
+def Parse(maze_file: str, status: dict):
+    process = subprocess.Popen(["./execute"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True, bufsize = 1)
     start = False
     Paths = []
     readingPath = False
@@ -66,12 +66,10 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
 
-        res_p = ReadPath()
-        if res_p: yield res_p
+        ReadPath()
             
 
 
-    #print(Paths)
 
 
 
