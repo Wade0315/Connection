@@ -69,51 +69,7 @@ def action_processor(bridge: HM10ESP32Bridge, status: dict, event_queue: queue.Q
                 Passed_path.append(send_buffer[send_idx])
                 if send_idx < len(send_buffer) - 1: send_idx += 1
                 log.debug(f"Passed_path: {Passed_path}")
-                pass
-        elif action == "reach" and ingame:
-            log.info("[Action] - reach treasure point!")
-            try:
-                item = path_queue.get(block=False)
-                bridge.send(f'{item[1]}\n')
-                send_buffer.append(item[0])
-                Passed_path.append(send_buffer[send_idx])
-                send_idx += 1
-                log.info(f"[Action] - send command: {item[1]}")
-                log.debug(f"Passed_path: {Passed_path}")
-            except queue.Empty:
-                Passed_path.append(send_buffer[send_idx])
-                if send_idx < len(send_buffer) - 1: send_idx += 1
-                log.debug(f"Passed_path: {Passed_path}")
-                pass
-        elif action == "restart" and ingame:
-            log.warning("[Action] - need restart!")
-            ignore_event.set()
-            if Passed_path:
-                Passed_path.pop()
-            while not event_queue.empty():
-                try: event_queue.get_nowait()
-                except queue.Empty: break            
-            while not path_queue.empty():
-                try: path_queue.get_nowait()
-                except queue.Empty: break  
-            time.sleep(0.2)
-            #保險
-            while not event_queue.empty():
-                try: event_queue.get_nowait()
-                except queue.Empty: break
-            log.info("[Action] - have clear all action, start restart")      
-            restart_decision.set()
-        elif action == "go":            
-            restart_decision.set()
-            time.sleep(0.08)
-            bridge.send()
-            initial_command()
-            ignore_event.clear()    
-            log.info("restart go!")
-
-
-
-            
+                pass            
 
 #connect to server
 def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status: dict):
@@ -122,8 +78,8 @@ def score_processor(uid_queue: queue.Queue, scoreboard: ScoreboardServer, status
         uid = uid_queue.get() 
         log.debug(f"[Score] - Get uid: {uid}")
         score, time_remaining = scoreboard.add_UID(uid)
-        # if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
-        #     status["end_time"] = time_remaining + time.time()
+        if time_remaining > 0 and abs(time_remaining - status["time_left"]) >= 1:
+            status["end_time"] = time_remaining + time.time()
         current_score = scoreboard.get_current_score()
         
         log.info(f"[Score] - Current score: {current_score}")
@@ -155,8 +111,6 @@ def gen_path_processor(path_queue: queue.Queue, maze_file: str, status: dict, re
         Path_json.append(json_dict)
         Path_list.append((i[0], mapping_move.get(i[1])))
         path_queue.put((i[0], mapping_move.get(i[1])))
-    json_str_buf = json.dumps(Path_list)
-    #log.debug(f"[Path] - Path data: {json_str_buf}")
     log.debug(f"[Path] - Path data: {Path_list}")
 
 

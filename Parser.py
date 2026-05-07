@@ -62,26 +62,6 @@ def Parse(maze_file: str, status: dict, restart_decision: threading.Event):
             yield("PATH", Paths)
             Paths = []
             log.info("\n=============== Gen path completed =================\n")
-        # elif "Do you want to restart [Y/N]:" in line_str:
-        #     log.debug("Do you want to restart [Y/N]:")
-        #     restart_decision.wait(timeout=None)
-        #     log.info(f'get restart')
-        #     process.stdin.write(f"Y\n")
-        #     process.stdin.flush()
-        #     restart_decision.clear()
-        # elif "Please enter the total index: (1-based)" in line_str:
-        #     res_i = status["step"]
-        #     process.stdin.write(f"{res_i}\n")
-        #     process.stdin.flush()
-        #     log.info(f"enter step: {res_i}")
-        # elif "Please enter the remain cost:" in line_str:
-        #     restart_decision.wait(timeout=None)
-        #     res_t = status["time_left"]
-        #     process.stdin.write(f"{res_t}\n")
-        #     process.stdin.flush()
-        #     restart_decision.clear()
-        #     log.info(f"enter cost: {res_t}")
-
 
         elif not start and line_str != 'Graph start':
             log.debug(line_str) 
